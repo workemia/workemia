@@ -1,40 +1,37 @@
 "use client"
 
 import { useState } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "@/hooks/use-toast"
 
 interface PaymentData {
+  amount: number
+  description: string
+  customerName: string
+  customerEmail: string
+  customerPhone?: string
   serviceId: string
   providerId: string
   clientId: string
-  amount: number
-  description: string
-  customer: {
-    name: string
-    email: string
-    phone?: string
-  }
 }
 
 interface PaymentResponse {
   id: string
   status: string
-  amount: number
   paymentUrl: string
-  pixCode?: string
-  pixQrCode?: string
-  boletoUrl?: string
+  amount: number
+  description: string
+  createdAt: string
 }
 
 export function usePayment() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null)
-  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const createPayment = async (data: PaymentData): Promise<PaymentResponse | null> => {
-    setIsLoading(true)
-
     try {
+      setLoading(true)
+      setError(null)
+
       const response = await fetch("/api/payments/create", {
         method: "POST",
         headers: {
@@ -45,71 +42,53 @@ export function usePayment() {
 
       const result = await response.json()
 
+      if (!response.ok) {
+        throw new Error(result.error || "Erro ao criar pagamento")
+      }
+
       if (result.success) {
-        setPaymentData(result.payment)
         toast({
           title: "Pagamento criado!",
-          description: "Escolha a forma de pagamento desejada.",
+          description: "Redirecionando para a página de pagamento...",
         })
         return result.payment
-      } else {
-        throw new Error(result.error)
       }
-    } catch (error) {
+
+      return null
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido"
+      setError(errorMessage)
       toast({
-        title: "Erro",
-        description: "Não foi possível criar o pagamento. Tente novamente.",
+        title: "Erro no pagamento",
+        description: errorMessage,
         variant: "destructive",
       })
       return null
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const checkPaymentStatus = async (paymentId: string): Promise<PaymentResponse | null> => {
+  const getPaymentStatus = async (paymentId: string): Promise<string | null> => {
     try {
       const response = await fetch(`/api/payments/status/${paymentId}`)
       const result = await response.json()
 
       if (result.success) {
-        return result.payment
-      } else {
-        throw new Error(result.error)
+        return result.status
       }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível verificar o status do pagamento.",
-        variant: "destructive",
-      })
+
+      return null
+    } catch (err) {
+      console.error("Erro ao consultar status do pagamento:", err)
       return null
     }
   }
 
-  const openPaymentUrl = (paymentUrl: string) => {
-    window.open(paymentUrl, "_blank")
-    toast({
-      title: "Redirecionando...",
-      description: "Você será direcionado para completar o pagamento.",
-    })
-  }
-
-  const copyPixCode = (pixCode: string) => {
-    navigator.clipboard.writeText(pixCode)
-    toast({
-      title: "Copiado!",
-      description: "Código PIX copiado para a área de transferência.",
-    })
-  }
-
   return {
-    isLoading,
-    paymentData,
     createPayment,
-    checkPaymentStatus,
-    openPaymentUrl,
-    copyPixCode,
-    setPaymentData,
+    getPaymentStatus,
+    loading,
+    error,
   }
 }

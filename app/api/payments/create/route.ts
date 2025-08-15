@@ -1,29 +1,28 @@
 import { type NextRequest, NextResponse } from "next/server"
-import AbacatePayService from "@/lib/abacate-pay"
+import { AbacatePayService } from "@/lib/abacate-pay"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const { serviceId, providerId, clientId, amount, description, customer } = body
+    const { amount, description, customerName, customerEmail, customerPhone, serviceId, providerId, clientId } = body
 
-    if (!amount || !description || !customer) {
+    // Validar dados obrigatórios
+    if (!amount || !description || !customerName || !customerEmail || !serviceId) {
       return NextResponse.json({ error: "Dados obrigatórios não fornecidos" }, { status: 400 })
     }
 
-    const paymentData = {
+    // Criar pagamento
+    const payment = await AbacatePayService.createPayment({
       amount,
       description,
-      customer,
-      metadata: {
-        serviceId,
-        providerId,
-        clientId,
-        timestamp: new Date().toISOString(),
-      },
-    }
-
-    const payment = await AbacatePayService.createPayment(paymentData)
+      customerName,
+      customerEmail,
+      customerPhone,
+      serviceId,
+      providerId,
+      clientId,
+    })
 
     return NextResponse.json({
       success: true,

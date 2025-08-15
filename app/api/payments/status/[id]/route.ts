@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import AbacatePayService from "@/lib/abacate-pay"
+import { AbacatePayService } from "@/lib/abacate-pay"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -9,11 +9,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "ID do pagamento não fornecido" }, { status: 400 })
     }
 
-    const payment = await AbacatePayService.getPaymentStatus(paymentId)
+    const status = await AbacatePayService.getPaymentStatus(paymentId)
 
     return NextResponse.json({
       success: true,
-      payment,
+      status,
     })
   } catch (error) {
     console.error("Erro ao consultar status do pagamento:", error)
