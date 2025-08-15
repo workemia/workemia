@@ -6,30 +6,34 @@ import { toast } from "sonner"
 interface PaymentData {
   serviceId: string
   providerId: string
+  clientId: string
   amount: number
   description: string
-  clientName: string
-  clientEmail: string
-  clientPhone?: string
+  customer: {
+    name: string
+    email: string
+    phone?: string
+  }
 }
 
-interface PaymentResponse {
+interface Payment {
   id: string
-  status: "pending" | "paid" | "cancelled" | "expired"
+  status: string
   amount: number
   paymentUrl: string
   pixCode?: string
   pixQrCode?: string
+  boletoUrl?: string
   expiresAt: string
 }
 
 export function usePayment() {
-  const [isLoading, setIsLoading] = useState(false)
+  const [payment, setPayment] = useState<Payment | null>(null)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null)
 
-  const createPayment = async (data: PaymentData): Promise<PaymentResponse | null> => {
-    setIsLoading(true)
+  const createPayment = async (data: PaymentData) => {
+    setLoading(true)
     setError(null)
 
     try {
@@ -41,64 +45,61 @@ export function usePayment() {
         body: JSON.stringify(data),
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Erro ao criar pagamento")
+        throw new Error(result.error || "Erro ao criar pagamento")
       }
 
-      const payment: PaymentResponse = await response.json()
-      setPaymentData(payment)
-
+      setPayment(result.payment)
       toast.success("Pagamento criado com sucesso!")
-      return payment
+
+      return result.payment
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro desconhecido"
       setError(errorMessage)
       toast.error(errorMessage)
-      return null
+      throw err
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const checkPaymentStatus = async (paymentId: string): Promise<PaymentResponse | null> => {
-    setIsLoading(true)
+  const checkPaymentStatus = async (paymentId: string) => {
+    setLoading(true)
     setError(null)
 
     try {
       const response = await fetch(`/api/payments/status/${paymentId}`)
+      const result = await response.json()
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Erro ao consultar pagamento")
+        throw new Error(result.error || "Erro ao consultar pagamento")
       }
 
-      const payment: PaymentResponse = await response.json()
-      setPaymentData(payment)
-
-      return payment
+      setPayment(result.payment)
+      return result.payment
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro desconhecido"
       setError(errorMessage)
       toast.error(errorMessage)
-      return null
+      throw err
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   const resetPayment = () => {
-    setPaymentData(null)
+    setPayment(null)
     setError(null)
-    setIsLoading(false)
   }
 
   return {
+    payment,
+    loading,
+    error,
     createPayment,
     checkPaymentStatus,
     resetPayment,
-    isLoading,
-    error,
-    paymentData,
   }
 }

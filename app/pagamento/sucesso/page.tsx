@@ -1,73 +1,79 @@
 "use client"
 
-import { Suspense, useEffect, useState } from "react"
+import { Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, ArrowLeft, Home } from "lucide-react"
+import { CheckCircle, Home, MessageSquare } from "lucide-react"
 import Link from "next/link"
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams()
-  const [paymentId, setPaymentId] = useState<string>("")
-  const [amount, setAmount] = useState<string>("")
+  const paymentId = searchParams.get("payment_id")
+  const amount = searchParams.get("amount")
+  const service = searchParams.get("service")
 
-  useEffect(() => {
-    const id = searchParams.get("payment_id") || ""
-    const value = searchParams.get("amount") || ""
-    setPaymentId(id)
-    setAmount(value)
-  }, [searchParams])
+  const formatPrice = (price: string) => {
+    const numPrice = Number.parseFloat(price)
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(numPrice)
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle className="h-8 w-8 text-green-600" />
+          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <CardTitle className="text-2xl text-green-600">Pagamento Aprovado!</CardTitle>
+          <CardTitle className="text-2xl text-green-600">Pagamento Confirmado!</CardTitle>
           <CardDescription>Seu pagamento foi processado com sucesso</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           {paymentId && (
-            <div className="rounded-lg bg-green-50 p-4">
-              <div className="text-sm">
-                <p className="font-medium text-green-800">ID do Pagamento</p>
-                <p className="text-green-600 font-mono">{paymentId}</p>
-              </div>
-              {amount && (
-                <div className="mt-2 text-sm">
-                  <p className="font-medium text-green-800">Valor Pago</p>
-                  <p className="text-green-600">R$ {amount}</p>
-                </div>
-              )}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-600">ID do Pagamento:</p>
+              <p className="font-mono text-sm">{paymentId}</p>
             </div>
           )}
 
-          <div className="rounded-lg bg-blue-50 p-4">
-            <h3 className="font-medium text-blue-800 mb-2">Próximos Passos</h3>
-            <ul className="text-sm text-blue-600 space-y-1">
-              <li>• O prestador foi notificado sobre o pagamento</li>
-              <li>• Você receberá atualizações por email</li>
-              <li>• O serviço será executado conforme agendado</li>
-            </ul>
-          </div>
+          {amount && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-600">Valor Pago:</p>
+              <p className="text-xl font-bold text-green-600">{formatPrice(amount)}</p>
+            </div>
+          )}
 
-          <div className="flex gap-2 pt-4">
-            <Button asChild variant="outline" className="flex-1 bg-transparent">
-              <Link href="/dashboard/cliente">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Dashboard
-              </Link>
-            </Button>
-            <Button asChild className="flex-1">
-              <Link href="/">
-                <Home className="mr-2 h-4 w-4" />
-                Início
-              </Link>
-            </Button>
+          {service && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-600">Serviço:</p>
+              <p className="font-medium">{decodeURIComponent(service)}</p>
+            </div>
+          )}
+
+          <div className="pt-4 space-y-3">
+            <p className="text-sm text-center text-gray-600">
+              O prestador foi notificado e entrará em contato em breve.
+            </p>
+
+            <div className="flex flex-col space-y-2">
+              <Button asChild className="w-full">
+                <Link href="/chat">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Ir para o Chat
+                </Link>
+              </Button>
+
+              <Button variant="outline" asChild className="w-full bg-transparent">
+                <Link href="/">
+                  <Home className="w-4 h-4 mr-2" />
+                  Voltar ao Início
+                </Link>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -79,8 +85,8 @@ export default function PaymentSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       }
     >

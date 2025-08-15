@@ -5,9 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { CreditCard, Smartphone, FileText, Building2, X, Copy, Check } from "lucide-react"
 import { usePayment } from "@/hooks/use-payment"
-import { CreditCard, Smartphone, FileText, Loader2, CheckCircle, XCircle } from "lucide-react"
 
 interface Service {
   id: string
@@ -34,7 +33,8 @@ interface PaymentModalProps {
 
 export function PaymentModal({ isOpen, onClose, service, client }: PaymentModalProps) {
   const [selectedMethod, setSelectedMethod] = useState<string>("")
-  const { createPayment, isLoading, error, paymentData } = usePayment()
+  const [copied, setCopied] = useState(false)
+  const { createPayment, payment, loading, error } = usePayment()
 
   const paymentMethods = [
     {
@@ -47,52 +47,66 @@ export function PaymentModal({ isOpen, onClose, service, client }: PaymentModalP
     {
       id: "credit_card",
       name: "Cartão de Crédito",
-      description: "Visa, Mastercard, Elo",
+      description: "Parcelado em até 12x",
       icon: CreditCard,
       badge: "Parcelado",
     },
     {
-      id: "debit_card",
-      name: "Cartão de Débito",
-      description: "Débito à vista",
-      icon: CreditCard,
-      badge: "À vista",
-    },
-    {
-      id: "bank_slip",
+      id: "boleto",
       name: "Boleto Bancário",
       description: "Vencimento em 3 dias",
       icon: FileText,
       badge: "3 dias",
     },
+    {
+      id: "bank_transfer",
+      name: "Transferência",
+      description: "TED/DOC bancário",
+      icon: Building2,
+      badge: "1-2 dias",
+    },
   ]
 
   const handlePayment = async () => {
-    try {
-      const payment = await createPayment({
-        serviceId: service.id,
-        providerId: service.providerId,
-        amount: service.price,
-        description: `${service.title} - ${service.provider}`,
-        clientName: client.name,
-        clientEmail: client.email,
-        clientPhone: client.phone,
-      })
+    if (!selectedMethod) return
 
-      if (payment?.paymentUrl) {
-        // Redirecionar para a página de pagamento
-        window.open(payment.paymentUrl, "_blank")
-      }
-    } catch (err) {
-      console.error("Erro ao processar pagamento:", err)
-    }
+    await createPayment({
+      serviceId: service.id,
+      providerId: service.providerId,
+      clientId: client.id,
+      amount: service.price,
+      description: `${service.title} - ${service.provider}`,
+      customer: {
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+      },
+    })
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(price)
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Finalizar Pagamento</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            Pagamento do Serviço
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -104,102 +118,101 @@ export function PaymentModal({ isOpen, onClose, service, client }: PaymentModalP
             </CardHeader>
             <CardContent>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total</span>
-                <span className="text-2xl font-bold">R$ {service.price.toFixed(2)}</span>
+                <span className="text-sm text-muted-foreground">Total:</span>
+                <span className="text-xl font-bold text-green-600">{formatPrice(service.price)}</span>
               </div>
             </CardContent>
           </Card>
 
-          <Separator />
+          {!payment ? (
+            <>
+              {/* Métodos de Pagamento */}
+              <div className="space-y-3">
+                <h3 className="font-medium">Escolha o método de pagamento:</h3>
+                {paymentMethods.map((method) => {
+                  const Icon = method.icon
+                  return (
+                    <Card
+                      key={method.id}
+                      className={`cursor-pointer transition-colors ${
+                        selectedMethod === method.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
+                      }`}
+                      onClick={() => setSelectedMethod(method.id)}
+                    >
+                      <CardContent className="flex items-center justify-between p-4">
+                        <div className="flex items-center space-x-3">
+                          <Icon className="h-5 w-5 text-gray-600" />
+                          <div>
+                            <p className="font-medium">{method.name}</p>
+                            <p className="text-sm text-muted-foreground">{method.description}</p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary">{method.badge}</Badge>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
 
-          {/* Métodos de Pagamento */}
-          <div className="space-y-3">
-            <h3 className="font-medium">Escolha a forma de pagamento</h3>
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
 
-            {paymentMethods.map((method) => {
-              const Icon = method.icon
-              return (
-                <Card
-                  key={method.id}
-                  className={`cursor-pointer transition-colors ${
-                    selectedMethod === method.id ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/50"
-                  }`}
-                  onClick={() => setSelectedMethod(method.id)}
-                >
-                  <CardContent className="flex items-center gap-3 p-3">
-                    <Icon className="h-5 w-5" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{method.name}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {method.badge}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{method.description}</p>
+              <Button onClick={handlePayment} disabled={!selectedMethod || loading} className="w-full">
+                {loading ? "Processando..." : "Confirmar Pagamento"}
+              </Button>
+            </>
+          ) : (
+            /* Dados do Pagamento */
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-3">
+                  <Check className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="font-medium text-lg">Pagamento Criado!</h3>
+                <p className="text-sm text-muted-foreground">ID: {payment.id}</p>
+              </div>
+
+              {payment.pixCode && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">PIX Copia e Cola</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center space-x-2">
+                      <code className="flex-1 p-2 bg-gray-100 rounded text-xs break-all">{payment.pixCode}</code>
+                      <Button size="sm" variant="outline" onClick={() => copyToClipboard(payment.pixCode!)}>
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
                     </div>
-                    {selectedMethod === method.id && <CheckCircle className="h-5 w-5 text-primary" />}
                   </CardContent>
                 </Card>
-              )
-            })}
-          </div>
-
-          {/* Status do Pagamento */}
-          {paymentData && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  {paymentData.status === "pending" && (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin text-yellow-500" />
-                      <span className="text-sm">Aguardando pagamento...</span>
-                    </>
-                  )}
-                  {paymentData.status === "paid" && (
-                    <>
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-green-600">Pagamento aprovado!</span>
-                    </>
-                  )}
-                  {paymentData.status === "cancelled" && (
-                    <>
-                      <XCircle className="h-4 w-4 text-red-500" />
-                      <span className="text-sm text-red-600">Pagamento cancelado</span>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Erro */}
-          {error && (
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4 text-red-500" />
-                  <span className="text-sm text-red-600">{error}</span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Botões */}
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={onClose} className="flex-1 bg-transparent" disabled={isLoading}>
-              Cancelar
-            </Button>
-            <Button onClick={handlePayment} className="flex-1" disabled={!selectedMethod || isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                "Pagar Agora"
               )}
-            </Button>
-          </div>
+
+              {payment.pixQrCode && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">QR Code PIX</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <img src={payment.pixQrCode || "/placeholder.svg"} alt="QR Code PIX" className="mx-auto max-w-48" />
+                  </CardContent>
+                </Card>
+              )}
+
+              {payment.boletoUrl && (
+                <Button onClick={() => window.open(payment.boletoUrl, "_blank")} className="w-full">
+                  Visualizar Boleto
+                </Button>
+              )}
+
+              <Button onClick={() => window.open(payment.paymentUrl, "_blank")} variant="outline" className="w-full">
+                Abrir Página de Pagamento
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

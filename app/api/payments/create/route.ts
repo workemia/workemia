@@ -5,10 +5,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const { serviceId, providerId, amount, description, clientName, clientEmail, clientPhone } = body
+    const { serviceId, providerId, clientId, amount, description, customer } = body
 
-    // Validação básica
-    if (!serviceId || !providerId || !amount || !description || !clientName || !clientEmail) {
+    // Validar dados obrigatórios
+    if (!amount || !description || !customer?.name || !customer?.email) {
       return NextResponse.json({ error: "Dados obrigatórios não fornecidos" }, { status: 400 })
     }
 
@@ -16,18 +16,21 @@ export async function POST(request: NextRequest) {
     const payment = await AbacatePayService.createPayment({
       amount,
       description,
-      clientName,
-      clientEmail,
-      clientPhone,
-      serviceId,
-      providerId,
-      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/pagamento/sucesso`,
-      webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/abacate-pay`,
+      customer,
+      metadata: {
+        serviceId,
+        providerId,
+        clientId,
+        platform: "ServiceHub",
+      },
     })
 
-    return NextResponse.json(payment)
+    return NextResponse.json({
+      success: true,
+      payment,
+    })
   } catch (error) {
-    console.error("Erro ao criar pagamento:", error)
+    console.error("Erro na API de pagamento:", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
   }
 }
