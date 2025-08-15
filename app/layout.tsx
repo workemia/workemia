@@ -14,7 +14,23 @@ export const metadata: Metadata = {
   description: "Plataforma que conecta clientes a prestadores de serviços qualificados",
     generator: 'v0.app'
 }
-
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <title>Next.js</title>
+      </head>
+      <body>
+        {children}
+        <SpeedInsights />
+      </body>
+    </html>
+  );
+}
 export default function RootLayout({
   children,
 }: {
@@ -40,23 +56,5 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-
-    export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <head>
-        <title>Next.js</title>
-      </head>
-      <body>
-        {children}
-        <SpeedInsights />
-      </body>
-    </html>
-  );
-}
   )
 }
