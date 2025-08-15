@@ -3,49 +3,45 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { NotificationsProvider } from "@/contexts/notifications-context"
 import { Toaster } from "@/components/ui/toaster"
-import { Suspense } from "react"
+import { NotificationsProvider } from "@/contexts/notifications-context"
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ServiceHub - Conectando você aos melhores prestadores de serviços",
-  description: "Encontre prestadores de serviços qualificados na sua região. Limpeza, manutenção, beleza e muito mais.",
-    generator: 'v0.app'
+ title: "ServiceHub - Conectando você aos melhores prestadores de serviços",
+ description: "Plataforma que conecta clientes a prestadores de serviços qualificados",
+   generator: 'v0.app'
 }
 
 export default function RootLayout({
-  children,
+ children,
 }: {
-  children: React.ReactNode
+ children: React.ReactNode
 }) {
-  return (
-    <html lang="pt-BR">
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <NotificationsProvider>
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <main className="flex-1">
-                <Suspense
-                  fallback={
-                    <div className="min-h-screen flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                  }
-                >
-                  {children}
-                </Suspense>
-              </main>
-              <Footer />
-            </div>
-            <Toaster />
-          </NotificationsProvider>
-        </ThemeProvider>
-      </body>
-    </html>
-  )
+ return (
+   <html lang="pt-BR">
+     <head>
+       <link
+         rel="stylesheet"
+         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+         integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+         crossOrigin="anonymous"
+         referrerPolicy="no-referrer"
+       />
+     </head>
+     <body className={inter.className}>
+       <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+         <NotificationsProvider>
+           {children}
+           <Toaster />
+         </NotificationsProvider>
+       </ThemeProvider>
+       <SpeedInsights />
+       <Analytics />
+     </body>
+   </html>
+ )
 }
