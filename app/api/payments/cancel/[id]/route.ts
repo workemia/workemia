@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { AbacatePayService } from "@/lib/abacate-pay"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const paymentId = params.id
 
@@ -15,16 +15,25 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    // Consultar status no Abacate Pay
-    const payment = await AbacatePayService.getPaymentStatus(paymentId)
+    // Cancelar pagamento no Abacate Pay
+    const cancelled = await AbacatePayService.cancelPayment(paymentId)
 
-    return NextResponse.json({
-      success: true,
-      payment,
-      message: "Status do pagamento consultado com sucesso",
-    })
+    if (cancelled) {
+      return NextResponse.json({
+        success: true,
+        message: "Pagamento cancelado com sucesso",
+      })
+    } else {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Não foi possível cancelar o pagamento",
+        },
+        { status: 400 },
+      )
+    }
   } catch (error) {
-    console.error("Erro ao consultar status do pagamento:", error)
+    console.error("Erro ao cancelar pagamento:", error)
 
     const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor"
 

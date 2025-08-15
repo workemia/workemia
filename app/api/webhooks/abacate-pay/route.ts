@@ -10,37 +10,53 @@ export async function POST(request: NextRequest) {
     const isValid = AbacatePayService.verifyWebhook(body, signature)
 
     if (!isValid) {
-      return NextResponse.json({ error: "Assinatura inválida" }, { status: 401 })
+      console.error("Webhook com assinatura inválida")
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Assinatura do webhook inválida",
+        },
+        { status: 401 },
+      )
     }
 
     const webhookData = JSON.parse(body)
     const { event, data } = webhookData
 
-    // Processar diferentes tipos de eventos
-    switch (event) {
-      case "payment.approved":
-        console.log("Pagamento aprovado:", data.id)
-        // Aqui você pode atualizar o status no banco de dados
-        // await updatePaymentStatus(data.id, 'approved');
-        break
+    console.log("Webhook recebido:", {
+      event,
+      paymentId: data?.id,
+      timestamp: new Date().toISOString(),
+    })
 
-      case "payment.cancelled":
-        console.log("Pagamento cancelado:", data.id)
-        // await updatePaymentStatus(data.id, 'cancelled');
-        break
+    // Processar evento do webhook
+    await AbacatePayService.processWebhookEvent(event, data)
 
-      case "payment.expired":
-        console.log("Pagamento expirado:", data.id)
-        // await updatePaymentStatus(data.id, 'expired');
-        break
+    // Log para debug
+    console.log("Webhook processado com sucesso:", {
+      event,
+      paymentId: data?.id,
+      status: data?.status,
+      metadata: data?.metadata,
+    })
 
-      default:
-        console.log("Evento não tratado:", event)
-    }
-
-    return NextResponse.json({ received: true })
+    return NextResponse.json({
+      success: true,
+      message: "Webhook processado com sucesso",
+      received: true,
+    })
   } catch (error) {
-    console.error("Erro no webhook:", error)
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
+    console.error("Erro ao processar webhook:", error)
+
+    const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor"
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 },
+    )
   }
 }
