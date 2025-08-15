@@ -4,8 +4,8 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { NotificationsProvider } from "@/contexts/notifications-context"
-import { SpeedInsights } from "@vercel/speed-insights/next" 
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -40,10 +40,8 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  )
-}
 
-export default function RootLayout({
+    export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -59,4 +57,6 @@ export default function RootLayout({
       </body>
     </html>
   );
+}
+  )
 }
