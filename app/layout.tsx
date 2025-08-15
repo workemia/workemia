@@ -4,7 +4,6 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import { NotificationsProvider } from "@/contexts/notifications-context"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -14,23 +13,7 @@ export const metadata: Metadata = {
   description: "Plataforma que conecta clientes a prestadores de serviços qualificados",
     generator: 'v0.app'
 }
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <head>
-        <title>Next.js</title>
-      </head>
-      <body>
-        {children}
-        <SpeedInsights />
-      </body>
-    </html>
-  );
-}
+
 export default function RootLayout({
   children,
 }: {
