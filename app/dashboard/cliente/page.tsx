@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -73,6 +74,7 @@ interface Provider {
 }
 
 export default function ClientDashboard() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
@@ -82,6 +84,31 @@ export default function ClientDashboard() {
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user")
+    if (!userData) {
+      router.push("/login")
+      return
+    }
+
+    try {
+      const user = JSON.parse(userData)
+      if (user.type !== "cliente") {
+        router.push("/dashboard/prestador")
+        return
+      }
+
+      setProfileData((prev) => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+      }))
+    } catch (error) {
+      console.error("Erro ao carregar dados do usuário:", error)
+      router.push("/login")
+    }
+  }, [router])
 
   const [profileData, setProfileData] = useState({
     name: "João Silva",
@@ -289,8 +316,106 @@ export default function ClientDashboard() {
     return matchesSearch && matchesFilter
   })
 
+  const handleStartChat = (providerId: string, providerName: string) => {
+    router.push(`/chat?provider=${providerId}&name=${encodeURIComponent(providerName)}`)
+  }
+
+  const handleMakeCall = (providerName: string) => {
+    toast({
+      title: "Iniciando chamada",
+      description: `Conectando com ${providerName}...`,
+    })
+  }
+
+  const handleReschedule = (serviceId: string) => {
+    toast({
+      title: "Reagendar serviço",
+      description: "Redirecionando para reagendamento...",
+    })
+  }
+
+  const handleCancelService = (serviceId: string) => {
+    toast({
+      title: "Serviço cancelado",
+      description: "O serviço foi cancelado com sucesso.",
+    })
+  }
+
+  const handleRateService = (serviceId: string) => {
+    toast({
+      title: "Avaliar serviço",
+      description: "Redirecionando para avaliação...",
+    })
+  }
+
+  const handleRehireProvider = (providerId: string, providerName: string) => {
+    router.push(`/pagamento/${providerId}?name=${encodeURIComponent(providerName)}`)
+  }
+
+  const handleHireProvider = (providerId: string, providerName: string) => {
+    router.push(`/pagamento/${providerId}?name=${encodeURIComponent(providerName)}`)
+  }
+
+  const handleGoToNotifications = () => {
+    router.push("/notificacoes")
+  }
+
+  const handleChangePassword = () => {
+    router.push("/perfil?tab=security")
+  }
+
+  const handleTwoFactorAuth = () => {
+    toast({
+      title: "Verificação em 2 etapas",
+      description: "Redirecionando para configuração...",
+    })
+  }
+
+  const handleDownloadData = () => {
+    toast({
+      title: "Download iniciado",
+      description: "Seus dados estão sendo preparados para download.",
+    })
+  }
+
+  const handleUpgradePremium = () => {
+    toast({
+      title: "Upgrade Premium",
+      description: "Redirecionando para planos premium...",
+    })
+  }
+
   const handleNewServiceSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Validações básicas
+    if (!newService.title.trim()) {
+      toast({
+        title: "Título obrigatório",
+        description: "Por favor, informe o título do serviço.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!newService.category) {
+      toast({
+        title: "Categoria obrigatória",
+        description: "Por favor, selecione uma categoria.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!newService.description.trim()) {
+      toast({
+        title: "Descrição obrigatória",
+        description: "Por favor, descreva o serviço necessário.",
+        variant: "destructive",
+      })
+      return
+    }
+
     toast({
       title: "Solicitação enviada!",
       description: "Sua solicitação foi enviada para os prestadores. Você receberá propostas em breve.",
@@ -309,6 +434,15 @@ export default function ClientDashboard() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "A imagem deve ter no máximo 5MB.",
+          variant: "destructive",
+        })
+        return
+      }
+
       const reader = new FileReader()
       reader.onload = (e) => {
         setProfileImage(e.target?.result as string)
@@ -322,6 +456,41 @@ export default function ClientDashboard() {
   }
 
   const handleSaveProfile = () => {
+    // Validações básicas
+    if (!profileData.name.trim()) {
+      toast({
+        title: "Nome obrigatório",
+        description: "Por favor, preencha seu nome completo.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!profileData.email.trim() || !profileData.email.includes("@")) {
+      toast({
+        title: "E-mail inválido",
+        description: "Por favor, insira um e-mail válido.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Salvar no localStorage
+    const userData = localStorage.getItem("user")
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        const updatedUser = {
+          ...user,
+          name: profileData.name,
+          email: profileData.email,
+        }
+        localStorage.setItem("user", JSON.stringify(updatedUser))
+      } catch (error) {
+        console.error("Erro ao salvar dados:", error)
+      }
+    }
+
     setIsEditingProfile(false)
     toast({
       title: "Perfil atualizado",
@@ -344,6 +513,11 @@ export default function ClientDashboard() {
         [field]: value,
       },
     }))
+
+    toast({
+      title: value ? "Notificação ativada" : "Notificação desativada",
+      description: `${field} ${value ? "ativada" : "desativada"} com sucesso.`,
+    })
   }
 
   const handlePrivacyChange = (field: string, value: boolean) => {
@@ -354,6 +528,11 @@ export default function ClientDashboard() {
         [field]: value,
       },
     }))
+
+    toast({
+      title: "Configuração de privacidade atualizada",
+      description: `Configuração ${field} ${value ? "ativada" : "desativada"}.`,
+    })
   }
 
   const getStatusColor = (status: string) => {
@@ -396,7 +575,7 @@ export default function ClientDashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button onClick={() => setNotifications(0)} variant="outline" className="relative bg-transparent">
+            <Button onClick={handleGoToNotifications} variant="outline" className="relative bg-transparent">
               <Bell className="w-4 h-4 mr-2" />
               Notificações
               {notifications > 0 && (
@@ -503,8 +682,7 @@ export default function ClientDashboard() {
 
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <i className="fas fa-lightbulb mr-2"></i>
-                      <strong>Dica:</strong> Seja específico na descrição para receber propostas mais precisas!
+                      💡 <strong>Dica:</strong> Seja específico na descrição para receber propostas mais precisas!
                     </p>
                   </div>
 
@@ -540,9 +718,7 @@ export default function ClientDashboard() {
                         <TrendingUp className="w-3 h-3 mr-1" />+{stats.monthlyGrowth}% este mês
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <i className="fas fa-clipboard-list text-blue-600 text-xl"></i>
-                    </div>
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">📋</div>
                   </div>
                 </CardContent>
               </Card>
@@ -558,9 +734,7 @@ export default function ClientDashboard() {
                         Em andamento
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <i className="fas fa-play-circle text-green-600 text-xl"></i>
-                    </div>
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">▶️</div>
                   </div>
                 </CardContent>
               </Card>
@@ -576,9 +750,7 @@ export default function ClientDashboard() {
                         Este ano
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <i className="fas fa-wallet text-purple-600 text-xl"></i>
-                    </div>
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">💰</div>
                   </div>
                 </CardContent>
               </Card>
@@ -595,9 +767,7 @@ export default function ClientDashboard() {
                         ))}
                       </div>
                     </div>
-                    <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <i className="fas fa-star text-yellow-600 text-xl"></i>
-                    </div>
+                    <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">⭐</div>
                   </div>
                 </CardContent>
               </Card>
@@ -760,19 +930,22 @@ export default function ClientDashboard() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Button variant="outline" size="sm" onClick={() => setSelectedService(service)}>
-                          <i className="fas fa-eye mr-2"></i>
-                          Detalhes
+                          👁️ Detalhes
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStartChat(service.id, service.provider)}
+                        >
                           <MessageCircle className="w-4 h-4 mr-2" />
                           Chat
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleMakeCall(service.provider)}>
                           <Phone className="w-4 h-4 mr-2" />
                           Ligar
                         </Button>
                         {service.status === "ativo" && (
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => handleReschedule(service.id)}>
                             <Calendar className="w-4 h-4 mr-2" />
                             Reagendar
                           </Button>
@@ -843,16 +1016,19 @@ export default function ClientDashboard() {
                     )}
 
                     <div className="flex justify-end space-x-2">
-                      <Button variant="outline">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleStartChat(selectedService.id, selectedService.provider)}
+                      >
                         <MessageCircle className="w-4 h-4 mr-2" />
                         Conversar
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={() => handleMakeCall(selectedService.provider)}>
                         <Phone className="w-4 h-4 mr-2" />
                         Ligar
                       </Button>
                       {selectedService.status === "ativo" && (
-                        <Button variant="outline">
+                        <Button variant="outline" onClick={() => handleCancelService(selectedService.id)}>
                           <X className="w-4 h-4 mr-2" />
                           Cancelar
                         </Button>
@@ -891,10 +1067,14 @@ export default function ClientDashboard() {
                         <p className="font-semibold text-gray-900">{service.price}</p>
                         <Badge className={getStatusColor(service.status)}>{service.status}</Badge>
                         <div className="flex items-center space-x-2 mt-2">
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => handleRateService(service.id)}>
                             Avaliar
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRehireProvider(service.id, service.provider)}
+                          >
                             Recontratar
                           </Button>
                         </div>
@@ -920,10 +1100,7 @@ export default function ClientDashboard() {
                           <div className="flex items-center">
                             <h3 className="text-lg font-semibold text-gray-900">{provider.name}</h3>
                             {provider.verified && (
-                              <Badge className="ml-2 bg-green-100 text-green-800">
-                                <i className="fas fa-check-circle mr-1"></i>
-                                Verificado
-                              </Badge>
+                              <Badge className="ml-2 bg-green-100 text-green-800">✅ Verificado</Badge>
                             )}
                           </div>
                           <p className="text-gray-600">{provider.service}</p>
@@ -959,15 +1136,21 @@ export default function ClientDashboard() {
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-900">{provider.price}</p>
                         <div className="flex items-center space-x-2 mt-4">
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStartChat(provider.id, provider.name)}
+                          >
                             <MessageCircle className="w-4 h-4 mr-2" />
                             Chat
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => handleMakeCall(provider.name)}>
                             <Phone className="w-4 h-4 mr-2" />
                             Ligar
                           </Button>
-                          <Button size="sm">Contratar</Button>
+                          <Button size="sm" onClick={() => handleHireProvider(provider.id, provider.name)}>
+                            Contratar
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -1274,17 +1457,27 @@ export default function ClientDashboard() {
                     <CardTitle>Segurança da Conta</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button variant="outline" className="w-full justify-start bg-transparent">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start bg-transparent"
+                      onClick={handleChangePassword}
+                    >
                       <Settings className="w-4 h-4 mr-2" />
                       Alterar Senha
                     </Button>
-                    <Button variant="outline" className="w-full justify-start bg-transparent">
-                      <i className="fas fa-shield-alt w-4 h-4 mr-2"></i>
-                      Verificação em 2 Etapas
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start bg-transparent"
+                      onClick={handleTwoFactorAuth}
+                    >
+                      🛡️ Verificação em 2 Etapas
                     </Button>
-                    <Button variant="outline" className="w-full justify-start bg-transparent">
-                      <i className="fas fa-download w-4 h-4 mr-2"></i>
-                      Baixar Meus Dados
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start bg-transparent"
+                      onClick={handleDownloadData}
+                    >
+                      📥 Baixar Meus Dados
                     </Button>
                   </CardContent>
                 </Card>
@@ -1296,13 +1489,16 @@ export default function ClientDashboard() {
                   <CardContent>
                     <div className="text-center">
                       <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i className="fas fa-crown text-white text-2xl"></i>
+                        👑
                       </div>
                       <h3 className="font-semibold mb-2">Upgrade para Premium</h3>
                       <p className="text-sm text-gray-600 mb-4">
                         Tenha acesso a recursos exclusivos e prioridade no atendimento
                       </p>
-                      <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+                      <Button
+                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                        onClick={handleUpgradePremium}
+                      >
                         Assinar Premium
                       </Button>
                     </div>

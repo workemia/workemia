@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { toast } from "@/components/ui/use-toast"
 import {
   Calendar,
   Clock,
@@ -184,7 +185,7 @@ export default function DashboardPrestador() {
             <p className="text-gray-600">Gerencie seus serviços e acompanhe seu desempenho</p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => (window.location.href = "/notificacoes")}>
               <Bell className="h-4 w-4 mr-2" />
               Notificações
               {unreadCount > 0 && (
@@ -196,7 +197,7 @@ export default function DashboardPrestador() {
                 </Badge>
               )}
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => (window.location.href = "/perfil?tab=settings")}>
               <Settings className="h-4 w-4 mr-2" />
               Configurações
             </Button>
@@ -333,7 +334,49 @@ export default function DashboardPrestador() {
                               <MessageCircle className="h-4 w-4 mr-2" />
                               Chat
                             </Button>
-                            {service.status === "pending" && <Button size="sm">Aceitar</Button>}
+                            {service.status === "pending" && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  toast({
+                                    title: "Serviço aceito",
+                                    description: "Você aceitou a solicitação de serviço.",
+                                  })
+                                }}
+                              >
+                                Aceitar
+                              </Button>
+                            )}
+                            {service.status === "accepted" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  toast({
+                                    title: "Serviço iniciado",
+                                    description: "Serviço marcado como em andamento.",
+                                  })
+                                }}
+                                className="bg-transparent"
+                              >
+                                Iniciar
+                              </Button>
+                            )}
+                            {service.status === "in_progress" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  toast({
+                                    title: "Serviço concluído",
+                                    description: "Serviço marcado como concluído.",
+                                  })
+                                }}
+                                className="bg-green-50 text-green-700 border-green-200"
+                              >
+                                Concluir
+                              </Button>
+                            )}
                           </div>
                         </div>
                         {service.progress > 0 && (

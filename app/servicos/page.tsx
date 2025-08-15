@@ -14,6 +14,7 @@ import { InteractiveMap } from "@/components/interactive-map"
 import { useProviders } from "@/hooks/use-providers"
 import { supabase } from "@/lib/supabase"
 import type { Database } from "@/lib/database.types"
+import { toast } from "@/components/ui/use-toast"
 
 type Category = Database["public"]["Tables"]["categories"]["Row"]
 
@@ -63,11 +64,53 @@ export default function ServicosPage() {
       const newFavorites = new Set(prev)
       if (newFavorites.has(providerId)) {
         newFavorites.delete(providerId)
+        toast({
+          title: "Removido dos favoritos",
+          description: "Prestador removido da sua lista de favoritos.",
+        })
       } else {
         newFavorites.add(providerId)
+        toast({
+          title: "Adicionado aos favoritos",
+          description: "Prestador adicionado à sua lista de favoritos.",
+        })
       }
       return newFavorites
     })
+  }
+
+  const handleStartChat = (providerId: string, providerName: string) => {
+    // Verificar se usuário está logado
+    const userData = localStorage.getItem("user")
+    if (!userData) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para conversar com prestadores.",
+        variant: "destructive",
+      })
+      window.location.href = "/login"
+      return
+    }
+
+    // Redirecionar para chat com o prestador
+    window.location.href = `/chat?provider=${providerId}&name=${encodeURIComponent(providerName)}`
+  }
+
+  const handleScheduleService = (providerId: string, providerName: string) => {
+    // Verificar se usuário está logado
+    const userData = localStorage.getItem("user")
+    if (!userData) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para agendar serviços.",
+        variant: "destructive",
+      })
+      window.location.href = "/login"
+      return
+    }
+
+    // Redirecionar para página de agendamento
+    window.location.href = `/pagamento/${providerId}?name=${encodeURIComponent(providerName)}`
   }
 
   const getInitials = (name: string) => {
@@ -298,11 +341,20 @@ export default function ServicosPage() {
                         <Separator />
 
                         <div className="flex gap-2">
-                          <Button size="sm" className="flex-1">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleStartChat(provider.id, provider.users.name)}
+                          >
                             <MessageCircle className="h-4 w-4 mr-2" />
                             Conversar
                           </Button>
-                          <Button size="sm" variant="outline" className="flex-1 bg-transparent">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 bg-transparent"
+                            onClick={() => handleScheduleService(provider.id, provider.users.name)}
+                          >
                             <Calendar className="h-4 w-4 mr-2" />
                             Agendar
                           </Button>

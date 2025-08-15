@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -14,24 +15,66 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
+import {
+  Eye,
+  EyeOff,
+  User,
+  Settings,
+  Shield,
+  CreditCard,
+  Star,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
+  Clock,
+} from "lucide-react"
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [userType, setUserType] = useState<"cliente" | "prestador">("prestador")
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user")
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        setUserType(user.type || "cliente")
+        setProfileData((prev) => ({
+          ...prev,
+          name: user.name || prev.name,
+          email: user.email || prev.email,
+        }))
+      } catch (error) {
+        console.error("Erro ao carregar dados do usuário:", error)
+      }
+    }
+  }, [])
 
   const [profileData, setProfileData] = useState({
     name: "João Santos",
     email: "joao.santos@email.com",
     phone: "(11) 99999-9999",
-    bio: "Profissional experiente em serviços gerais com mais de 5 anos de experiência. Especializado em reparos domésticos, pintura e manutenção.",
+    bio:
+      userType === "prestador"
+        ? "Profissional experiente em serviços gerais com mais de 5 anos de experiência. Especializado em reparos domésticos, pintura e manutenção."
+        : "Cliente ativo da plataforma, sempre em busca de profissionais qualificados para serviços domésticos.",
     location: "São Paulo, SP",
     birthDate: "1985-03-15",
     cpf: "123.456.789-00",
-    services: ["Reparos Gerais", "Pintura", "Elétrica"],
+    services: userType === "prestador" ? ["Reparos Gerais", "Pintura", "Elétrica"] : [],
     hourlyRate: "120",
     availability: "Segunda a Sexta, 8h às 18h",
+    company: "",
+    website: "",
   })
 
   const [notifications, setNotifications] = useState({
@@ -39,17 +82,42 @@ export default function ProfilePage() {
     sms: false,
     push: true,
     marketing: false,
+    serviceUpdates: true,
+    promotions: false,
   })
 
   const [privacy, setPrivacy] = useState({
     showPhone: true,
     showEmail: false,
     showLocation: true,
+    showBirthDate: false,
+  })
+
+  const [securityData, setSecurityData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+    twoFactorEnabled: false,
+  })
+
+  const [paymentData, setPaymentData] = useState({
+    pixKey: "joao.santos@email.com",
+    bankAccount: "",
+    preferredMethod: "pix",
   })
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "A imagem deve ter no máximo 5MB.",
+          variant: "destructive",
+        })
+        return
+      }
+
       const reader = new FileReader()
       reader.onload = (e) => {
         setProfileImage(e.target?.result as string)
@@ -63,6 +131,41 @@ export default function ProfilePage() {
   }
 
   const handleSave = () => {
+    // Validações básicas
+    if (!profileData.name.trim()) {
+      toast({
+        title: "Nome obrigatório",
+        description: "Por favor, preencha seu nome completo.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!profileData.email.trim() || !profileData.email.includes("@")) {
+      toast({
+        title: "E-mail inválido",
+        description: "Por favor, insira um e-mail válido.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Salvar no localStorage
+    const userData = localStorage.getItem("user")
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        const updatedUser = {
+          ...user,
+          name: profileData.name,
+          email: profileData.email,
+        }
+        localStorage.setItem("user", JSON.stringify(updatedUser))
+      } catch (error) {
+        console.error("Erro ao salvar dados:", error)
+      }
+    }
+
     setIsEditing(false)
     toast({
       title: "Perfil atualizado",
@@ -75,6 +178,82 @@ export default function ProfilePage() {
       ...prev,
       [field]: value,
     }))
+  }
+
+  const handleSecurityChange = (field: string, value: string | boolean) => {
+    setSecurityData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
+  const handlePaymentChange = (field: string, value: string) => {
+    setPaymentData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
+  const handleChangePassword = () => {
+    if (!securityData.currentPassword) {
+      toast({
+        title: "Senha atual obrigatória",
+        description: "Digite sua senha atual para continuar.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (securityData.newPassword.length < 6) {
+      toast({
+        title: "Senha muito curta",
+        description: "A nova senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (securityData.newPassword !== securityData.confirmPassword) {
+      toast({
+        title: "Senhas não coincidem",
+        description: "A confirmação da senha não confere.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Simular alteração de senha
+    setSecurityData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+      twoFactorEnabled: securityData.twoFactorEnabled,
+    })
+
+    toast({
+      title: "Senha alterada",
+      description: "Sua senha foi alterada com sucesso!",
+    })
+  }
+
+  const handleTwoFactorSetup = () => {
+    toast({
+      title: "Configuração de 2FA",
+      description: "Redirecionando para configuração de autenticação em duas etapas...",
+    })
+    // Aqui seria implementada a lógica real de 2FA
+  }
+
+  const handleAddPaymentMethod = () => {
+    toast({
+      title: "Adicionar método de pagamento",
+      description: "Funcionalidade em desenvolvimento.",
+    })
+  }
+
+  const handleGoToDashboard = () => {
+    const dashboardUrl = userType === "cliente" ? "/dashboard/cliente" : "/dashboard/prestador"
+    router.push(dashboardUrl)
   }
 
   const reviews = [
@@ -105,7 +284,7 @@ export default function ProfilePage() {
   ]
 
   const stats = {
-    totalJobs: 127,
+    totalJobs: userType === "prestador" ? 127 : 23,
     rating: 4.9,
     responseTime: "2h",
     completionRate: "98%",
@@ -116,31 +295,39 @@ export default function ProfilePage() {
       <Header />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Meu Perfil</h1>
-          <p className="text-gray-600">Gerencie suas informações pessoais e configurações</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Meu Perfil</h1>
+            <p className="text-gray-600">Gerencie suas informações pessoais e configurações</p>
+          </div>
+          <Button onClick={handleGoToDashboard} className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Ir para Dashboard
+          </Button>
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
             <TabsTrigger value="profile" className="flex items-center gap-2">
-              <i className="fas fa-user"></i>
+              <User className="h-4 w-4" />
               <span className="hidden sm:inline">Perfil</span>
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="flex items-center gap-2">
-              <i className="fas fa-star"></i>
-              <span className="hidden sm:inline">Avaliações</span>
-            </TabsTrigger>
+            {userType === "prestador" && (
+              <TabsTrigger value="reviews" className="flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                <span className="hidden sm:inline">Avaliações</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="settings" className="flex items-center gap-2">
-              <i className="fas fa-cog"></i>
+              <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Configurações</span>
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center gap-2">
-              <i className="fas fa-shield-alt"></i>
+              <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Segurança</span>
             </TabsTrigger>
             <TabsTrigger value="billing" className="flex items-center gap-2">
-              <i className="fas fa-credit-card"></i>
+              <CreditCard className="h-4 w-4" />
               <span className="hidden sm:inline">Pagamentos</span>
             </TabsTrigger>
           </TabsList>
@@ -151,7 +338,10 @@ export default function ProfilePage() {
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Informações Pessoais</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Informações Pessoais
+                    </CardTitle>
                     <Button
                       variant={isEditing ? "default" : "outline"}
                       onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
@@ -178,14 +368,16 @@ export default function ProfilePage() {
                             className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
                             onClick={() => fileInputRef.current?.click()}
                           >
-                            <i className="fas fa-camera"></i>
+                            📷
                           </Button>
                         )}
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold">{profileData.name}</h3>
-                        <p className="text-gray-500">Prestador de Serviços</p>
-                        <Badge className="bg-green-100 text-green-700 mt-1">Verificado</Badge>
+                        <p className="text-gray-500 capitalize">
+                          {userType === "prestador" ? "Prestador de Serviços" : "Cliente"}
+                        </p>
+                        <Badge className="bg-green-100 text-green-700 mt-1">✓ Verificado</Badge>
                       </div>
                     </div>
 
@@ -200,7 +392,10 @@ export default function ProfilePage() {
                     {/* Campos do Formulário */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name">Nome Completo</Label>
+                        <Label htmlFor="name" className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Nome Completo
+                        </Label>
                         <Input
                           id="name"
                           value={profileData.name}
@@ -209,7 +404,10 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email">E-mail</Label>
+                        <Label htmlFor="email" className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          E-mail
+                        </Label>
                         <Input
                           id="email"
                           type="email"
@@ -219,7 +417,10 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="phone">Telefone</Label>
+                        <Label htmlFor="phone" className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          Telefone
+                        </Label>
                         <Input
                           id="phone"
                           value={profileData.phone}
@@ -228,7 +429,10 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="location">Localização</Label>
+                        <Label htmlFor="location" className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          Localização
+                        </Label>
                         <Input
                           id="location"
                           value={profileData.location}
@@ -237,7 +441,10 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="birthDate">Data de Nascimento</Label>
+                        <Label htmlFor="birthDate" className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          Data de Nascimento
+                        </Label>
                         <Input
                           id="birthDate"
                           type="date"
@@ -246,15 +453,17 @@ export default function ProfilePage() {
                           disabled={!isEditing}
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="hourlyRate">Valor por Hora (R$)</Label>
-                        <Input
-                          id="hourlyRate"
-                          value={profileData.hourlyRate}
-                          onChange={(e) => handleInputChange("hourlyRate", e.target.value)}
-                          disabled={!isEditing}
-                        />
-                      </div>
+                      {userType === "prestador" && (
+                        <div>
+                          <Label htmlFor="hourlyRate">Valor por Hora (R$)</Label>
+                          <Input
+                            id="hourlyRate"
+                            value={profileData.hourlyRate}
+                            onChange={(e) => handleInputChange("hourlyRate", e.target.value)}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -268,15 +477,20 @@ export default function ProfilePage() {
                       />
                     </div>
 
-                    <div>
-                      <Label htmlFor="availability">Disponibilidade</Label>
-                      <Input
-                        id="availability"
-                        value={profileData.availability}
-                        onChange={(e) => handleInputChange("availability", e.target.value)}
-                        disabled={!isEditing}
-                      />
-                    </div>
+                    {userType === "prestador" && (
+                      <div>
+                        <Label htmlFor="availability" className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Disponibilidade
+                        </Label>
+                        <Input
+                          id="availability"
+                          value={profileData.availability}
+                          onChange={(e) => handleInputChange("availability", e.target.value)}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -289,13 +503,15 @@ export default function ProfilePage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Trabalhos Concluídos</span>
+                      <span className="text-gray-600">
+                        {userType === "prestador" ? "Trabalhos Concluídos" : "Serviços Contratados"}
+                      </span>
                       <span className="font-semibold">{stats.totalJobs}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Avaliação Média</span>
                       <div className="flex items-center">
-                        <i className="fas fa-star text-yellow-400 mr-1"></i>
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
                         <span className="font-semibold">{stats.rating}</span>
                       </div>
                     </div>
@@ -310,62 +526,80 @@ export default function ProfilePage() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Serviços Oferecidos</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {profileData.services.map((service, index) => (
-                        <Badge key={index} variant="secondary">
-                          {service}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                {userType === "prestador" && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Serviços Oferecidos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {profileData.services.map((service, index) => (
+                          <Badge key={index} variant="secondary">
+                            {service}
+                          </Badge>
+                        ))}
+                      </div>
+                      {isEditing && (
+                        <Button variant="outline" className="w-full mt-3 bg-transparent">
+                          Gerenciar Serviços
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="reviews" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Avaliações dos Clientes</CardTitle>
-                <p className="text-gray-600">Veja o que seus clientes estão dizendo sobre você</p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="font-semibold">{review.client}</h4>
-                          <div className="flex items-center mt-1">
-                            <div className="flex text-yellow-400 mr-2">
-                              {[...Array(5)].map((_, i) => (
-                                <i key={i} className={`fas fa-star ${i < review.rating ? "" : "text-gray-300"}`}></i>
-                              ))}
+          {userType === "prestador" && (
+            <TabsContent value="reviews" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Star className="h-5 w-5" />
+                    Avaliações dos Clientes
+                  </CardTitle>
+                  <p className="text-gray-600">Veja o que seus clientes estão dizendo sobre você</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-semibold">{review.client}</h4>
+                            <div className="flex items-center mt-1">
+                              <div className="flex text-yellow-400 mr-2">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-4 w-4 ${i < review.rating ? "fill-current" : "text-gray-300"}`}
+                                  />
+                                ))}
+                              </div>
+                              <Badge variant="outline" className="text-xs">
+                                {review.service}
+                              </Badge>
                             </div>
-                            <Badge variant="outline" className="text-xs">
-                              {review.service}
-                            </Badge>
                           </div>
+                          <span className="text-sm text-gray-500">{review.date}</span>
                         </div>
-                        <span className="text-sm text-gray-500">{review.date}</span>
+                        <p className="text-gray-700">{review.comment}</p>
                       </div>
-                      <p className="text-gray-700">{review.comment}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="settings" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Notificações</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Notificações
+                </CardTitle>
                 <p className="text-gray-600">Configure como você quer receber notificações</p>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -377,7 +611,13 @@ export default function ProfilePage() {
                   <Switch
                     id="email-notifications"
                     checked={notifications.email}
-                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, email: checked }))}
+                    onCheckedChange={(checked) => {
+                      setNotifications((prev) => ({ ...prev, email: checked }))
+                      toast({
+                        title: checked ? "E-mail ativado" : "E-mail desativado",
+                        description: `Notificações por e-mail ${checked ? "ativadas" : "desativadas"}.`,
+                      })
+                    }}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -388,7 +628,13 @@ export default function ProfilePage() {
                   <Switch
                     id="sms-notifications"
                     checked={notifications.sms}
-                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, sms: checked }))}
+                    onCheckedChange={(checked) => {
+                      setNotifications((prev) => ({ ...prev, sms: checked }))
+                      toast({
+                        title: checked ? "SMS ativado" : "SMS desativado",
+                        description: `Notificações por SMS ${checked ? "ativadas" : "desativadas"}.`,
+                      })
+                    }}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -399,7 +645,30 @@ export default function ProfilePage() {
                   <Switch
                     id="push-notifications"
                     checked={notifications.push}
-                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, push: checked }))}
+                    onCheckedChange={(checked) => {
+                      setNotifications((prev) => ({ ...prev, push: checked }))
+                      toast({
+                        title: checked ? "Push ativado" : "Push desativado",
+                        description: `Notificações push ${checked ? "ativadas" : "desativadas"}.`,
+                      })
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="service-updates">Atualizações de Serviços</Label>
+                    <p className="text-sm text-gray-500">Receba notificações sobre seus serviços</p>
+                  </div>
+                  <Switch
+                    id="service-updates"
+                    checked={notifications.serviceUpdates}
+                    onCheckedChange={(checked) => {
+                      setNotifications((prev) => ({ ...prev, serviceUpdates: checked }))
+                      toast({
+                        title: checked ? "Atualizações ativadas" : "Atualizações desativadas",
+                        description: `Notificações de serviços ${checked ? "ativadas" : "desativadas"}.`,
+                      })
+                    }}
                   />
                 </div>
               </CardContent>
@@ -414,7 +683,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="show-phone">Mostrar Telefone</Label>
-                    <p className="text-sm text-gray-500">Permitir que clientes vejam seu telefone</p>
+                    <p className="text-sm text-gray-500">Permitir que outros usuários vejam seu telefone</p>
                   </div>
                   <Switch
                     id="show-phone"
@@ -425,7 +694,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="show-email">Mostrar E-mail</Label>
-                    <p className="text-sm text-gray-500">Permitir que clientes vejam seu e-mail</p>
+                    <p className="text-sm text-gray-500">Permitir que outros usuários vejam seu e-mail</p>
                   </div>
                   <Switch
                     id="show-email"
@@ -436,7 +705,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="show-location">Mostrar Localização</Label>
-                    <p className="text-sm text-gray-500">Permitir que clientes vejam sua localização</p>
+                    <p className="text-sm text-gray-500">Permitir que outros usuários vejam sua localização</p>
                   </div>
                   <Switch
                     id="show-location"
@@ -451,23 +720,74 @@ export default function ProfilePage() {
           <TabsContent value="security" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Alterar Senha</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Alterar Senha
+                </CardTitle>
                 <p className="text-gray-600">Mantenha sua conta segura com uma senha forte</p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="current-password">Senha Atual</Label>
-                  <Input id="current-password" type="password" />
+                  <div className="relative">
+                    <Input
+                      id="current-password"
+                      type={showCurrentPassword ? "text" : "password"}
+                      value={securityData.currentPassword}
+                      onChange={(e) => handleSecurityChange("currentPassword", e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    >
+                      {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="new-password">Nova Senha</Label>
-                  <Input id="new-password" type="password" />
+                  <div className="relative">
+                    <Input
+                      id="new-password"
+                      type={showNewPassword ? "text" : "password"}
+                      value={securityData.newPassword}
+                      onChange={(e) => handleSecurityChange("newPassword", e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                  <Input id="confirm-password" type="password" />
+                  <div className="relative">
+                    <Input
+                      id="confirm-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={securityData.confirmPassword}
+                      onChange={(e) => handleSecurityChange("confirmPassword", e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
-                <Button>Alterar Senha</Button>
+                <Button onClick={handleChangePassword}>Alterar Senha</Button>
               </CardContent>
             </Card>
 
@@ -482,7 +802,9 @@ export default function ProfilePage() {
                     <Label>Autenticação em Duas Etapas</Label>
                     <p className="text-sm text-gray-500">Usar SMS ou app autenticador</p>
                   </div>
-                  <Button variant="outline">Configurar</Button>
+                  <Button variant="outline" onClick={handleTwoFactorSetup} className="bg-transparent">
+                    {securityData.twoFactorEnabled ? "Configurado" : "Configurar"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -491,8 +813,15 @@ export default function ProfilePage() {
           <TabsContent value="billing" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Métodos de Pagamento</CardTitle>
-                <p className="text-gray-600">Gerencie como você recebe pagamentos</p>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Métodos de Pagamento
+                </CardTitle>
+                <p className="text-gray-600">
+                  {userType === "prestador"
+                    ? "Gerencie como você recebe pagamentos"
+                    : "Gerencie seus métodos de pagamento"}
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="border rounded-lg p-4">
@@ -503,13 +832,43 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <p className="font-medium">PIX</p>
-                        <p className="text-sm text-gray-500">joao.santos@email.com</p>
+                        <p className="text-sm text-gray-500">{paymentData.pixKey}</p>
                       </div>
                     </div>
                     <Badge className="bg-green-100 text-green-700">Principal</Badge>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full bg-transparent">
+
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="pix-key">Chave PIX</Label>
+                    <Input
+                      id="pix-key"
+                      value={paymentData.pixKey}
+                      onChange={(e) => handlePaymentChange("pixKey", e.target.value)}
+                      placeholder="Digite sua chave PIX"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="preferred-method">Método Preferido</Label>
+                    <Select
+                      value={paymentData.preferredMethod}
+                      onValueChange={(value) => handlePaymentChange("preferredMethod", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o método preferido" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pix">PIX</SelectItem>
+                        <SelectItem value="bank">Transferência Bancária</SelectItem>
+                        <SelectItem value="card">Cartão de Crédito</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button variant="outline" className="w-full bg-transparent" onClick={handleAddPaymentMethod}>
                   Adicionar Método de Pagamento
                 </Button>
               </CardContent>
@@ -523,11 +882,17 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between py-2 border-b">
                     <div>
-                      <p className="font-medium">Serviço de Pintura - Maria Silva</p>
+                      <p className="font-medium">
+                        {userType === "prestador"
+                          ? "Serviço de Pintura - Maria Silva"
+                          : "Pagamento - Serviço de Limpeza"}
+                      </p>
                       <p className="text-sm text-gray-500">15/12/2024</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-green-600">+ R$ 240,00</p>
+                      <p className={`font-medium ${userType === "prestador" ? "text-green-600" : "text-red-600"}`}>
+                        {userType === "prestador" ? "+ R$ 240,00" : "- R$ 180,00"}
+                      </p>
                       <Badge variant="secondary" className="text-xs">
                         Concluído
                       </Badge>
@@ -535,11 +900,15 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center justify-between py-2 border-b">
                     <div>
-                      <p className="font-medium">Reparos Gerais - Carlos Mendes</p>
+                      <p className="font-medium">
+                        {userType === "prestador" ? "Reparos Gerais - Carlos Mendes" : "Pagamento - Serviço de Pintura"}
+                      </p>
                       <p className="text-sm text-gray-500">10/12/2024</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-green-600">+ R$ 180,00</p>
+                      <p className={`font-medium ${userType === "prestador" ? "text-green-600" : "text-red-600"}`}>
+                        {userType === "prestador" ? "+ R$ 180,00" : "- R$ 240,00"}
+                      </p>
                       <Badge variant="secondary" className="text-xs">
                         Concluído
                       </Badge>
