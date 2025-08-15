@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "ServiceHub - Conectando você aos melhores prestadores de serviços",
   description: "Plataforma que conecta clientes a prestadores de serviços qualificados",
     generator: 'v0.app'
-
+}
 
 export default function RootLayout({
   children,
@@ -40,3 +40,4 @@ export default function RootLayout({
       </body>
     </html>
   )
+}
