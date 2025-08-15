@@ -1,83 +1,90 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "@/hooks/use-toast"
-import { CreditCard, DollarSign, Shield, Clock } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { usePayment } from "@/hooks/use-payment"
+import { CreditCard, Smartphone, FileText, Loader2, CheckCircle, XCircle } from "lucide-react"
+
+interface Service {
+  id: string
+  title: string
+  provider: string
+  providerId: string
+  price: number
+  description: string
+}
+
+interface Client {
+  id: string
+  name: string
+  email: string
+  phone?: string
+}
 
 interface PaymentModalProps {
   isOpen: boolean
   onClose: () => void
-  service: {
-    id: string
-    title: string
-    provider: string
-    providerId: string
-    price: number
-    description: string
-  }
-  client: {
-    id: string
-    name: string
-    email: string
-    phone?: string
-  }
+  service: Service
+  client: Client
 }
 
 export function PaymentModal({ isOpen, onClose, service, client }: PaymentModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
+  const [selectedMethod, setSelectedMethod] = useState<string>("")
+  const { createPayment, isLoading, error, paymentData } = usePayment()
+
+  const paymentMethods = [
+    {
+      id: "pix",
+      name: "PIX",
+      description: "Pagamento instantâneo",
+      icon: Smartphone,
+      badge: "Instantâneo",
+    },
+    {
+      id: "credit_card",
+      name: "Cartão de Crédito",
+      description: "Visa, Mastercard, Elo",
+      icon: CreditCard,
+      badge: "Parcelado",
+    },
+    {
+      id: "debit_card",
+      name: "Cartão de Débito",
+      description: "Débito à vista",
+      icon: CreditCard,
+      badge: "À vista",
+    },
+    {
+      id: "bank_slip",
+      name: "Boleto Bancário",
+      description: "Vencimento em 3 dias",
+      icon: FileText,
+      badge: "3 dias",
+    },
+  ]
 
   const handlePayment = async () => {
     try {
-      setLoading(true)
-
-      const response = await fetch("/api/payments/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: service.price,
-          description: `Pagamento do serviço: ${service.title}`,
-          customerName: client.name,
-          customerEmail: client.email,
-          customerPhone: client.phone,
-          serviceId: service.id,
-          providerId: service.providerId,
-          clientId: client.id,
-        }),
+      const payment = await createPayment({
+        serviceId: service.id,
+        providerId: service.providerId,
+        amount: service.price,
+        description: `${service.title} - ${service.provider}`,
+        clientName: client.name,
+        clientEmail: client.email,
+        clientPhone: client.phone,
       })
 
-      const data = await response.json()
-
-      if (data.success) {
-        setPaymentUrl(data.payment.paymentUrl)
-        toast({
-          title: "Pagamento criado!",
-          description: "Redirecionando para a página de pagamento...",
-        })
-
-        // Redirecionar para a URL de pagamento
-        setTimeout(() => {
-          window.open(data.payment.paymentUrl, "_blank")
-        }, 1000)
-      } else {
-        throw new Error(data.error || "Erro ao criar pagamento")
+      if (payment?.paymentUrl) {
+        // Redirecionar para a página de pagamento
+        window.open(payment.paymentUrl, "_blank")
       }
-    } catch (error) {
-      console.error("Erro:", error)
-      toast({
-        title: "Erro no pagamento",
-        description: "Não foi possível processar o pagamento. Tente novamente.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
+    } catch (err) {
+      console.error("Erro ao processar pagamento:", err)
     }
   }
 
@@ -85,90 +92,113 @@ export function PaymentModal({ isOpen, onClose, service, client }: PaymentModalP
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5" />
-            Pagamento do Serviço
-          </DialogTitle>
+          <DialogTitle>Finalizar Pagamento</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Resumo do Serviço */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">{service.title}</CardTitle>
+              <CardDescription>Prestador: {service.provider}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Prestador:</span>
-                <span className="font-medium">{service.provider}</span>
+                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-2xl font-bold">R$ {service.price.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Valor:</span>
-                <span className="text-2xl font-bold text-green-600">R$ {service.price.toFixed(2)}</span>
-              </div>
-              <Separator />
-              <p className="text-sm text-gray-600">{service.description}</p>
             </CardContent>
           </Card>
 
-          {/* Informações de Segurança */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Pagamento Seguro</span>
-            </div>
-            <p className="text-xs text-blue-700">
-              Processado pelo Abacate Pay com criptografia SSL e proteção de dados.
-            </p>
-          </div>
+          <Separator />
 
           {/* Métodos de Pagamento */}
           <div className="space-y-3">
-            <h4 className="font-medium">Métodos de Pagamento Disponíveis:</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <Badge variant="outline" className="justify-center py-2">
-                PIX
-              </Badge>
-              <Badge variant="outline" className="justify-center py-2">
-                Cartão
-              </Badge>
-              <Badge variant="outline" className="justify-center py-2">
-                Boleto
-              </Badge>
-              <Badge variant="outline" className="justify-center py-2">
-                Transferência
-              </Badge>
-            </div>
+            <h3 className="font-medium">Escolha a forma de pagamento</h3>
+
+            {paymentMethods.map((method) => {
+              const Icon = method.icon
+              return (
+                <Card
+                  key={method.id}
+                  className={`cursor-pointer transition-colors ${
+                    selectedMethod === method.id ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/50"
+                  }`}
+                  onClick={() => setSelectedMethod(method.id)}
+                >
+                  <CardContent className="flex items-center gap-3 p-3">
+                    <Icon className="h-5 w-5" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{method.name}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {method.badge}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{method.description}</p>
+                    </div>
+                    {selectedMethod === method.id && <CheckCircle className="h-5 w-5 text-primary" />}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
+
+          {/* Status do Pagamento */}
+          {paymentData && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  {paymentData.status === "pending" && (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-yellow-500" />
+                      <span className="text-sm">Aguardando pagamento...</span>
+                    </>
+                  )}
+                  {paymentData.status === "paid" && (
+                    <>
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm text-green-600">Pagamento aprovado!</span>
+                    </>
+                  )}
+                  {paymentData.status === "cancelled" && (
+                    <>
+                      <XCircle className="h-4 w-4 text-red-500" />
+                      <span className="text-sm text-red-600">Pagamento cancelado</span>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Erro */}
+          {error && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <XCircle className="h-4 w-4 text-red-500" />
+                  <span className="text-sm text-red-600">{error}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Botões */}
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1 bg-transparent" disabled={loading}>
+          <div className="flex gap-2 pt-4">
+            <Button variant="outline" onClick={onClose} className="flex-1 bg-transparent" disabled={isLoading}>
               Cancelar
             </Button>
-            <Button onClick={handlePayment} className="flex-1 bg-green-600 hover:bg-green-700" disabled={loading}>
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <Button onClick={handlePayment} className="flex-1" disabled={!selectedMethod || isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processando...
-                </div>
+                </>
               ) : (
-                <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Pagar Agora
-                </div>
+                "Pagar Agora"
               )}
             </Button>
-          </div>
-
-          {/* Informações Adicionais */}
-          <div className="text-xs text-gray-500 space-y-1">
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>Processamento instantâneo para PIX</span>
-            </div>
-            <p>• Você receberá um e-mail de confirmação após o pagamento</p>
-            <p>• O prestador será notificado automaticamente</p>
           </div>
         </div>
       </DialogContent>

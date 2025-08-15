@@ -9,14 +9,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "ID do pagamento não fornecido" }, { status: 400 })
     }
 
-    const status = await AbacatePayService.getPaymentStatus(paymentId)
+    const payment = await AbacatePayService.getPaymentStatus(paymentId)
 
-    return NextResponse.json({
-      success: true,
-      status,
-    })
+    return NextResponse.json(payment)
   } catch (error) {
-    console.error("Erro ao consultar status do pagamento:", error)
+    console.error("Erro ao consultar pagamento:", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
   }
 }

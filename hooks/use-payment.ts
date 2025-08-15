@@ -1,37 +1,38 @@
 "use client"
 
 import { useState } from "react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 interface PaymentData {
-  amount: number
-  description: string
-  customerName: string
-  customerEmail: string
-  customerPhone?: string
   serviceId: string
   providerId: string
-  clientId: string
+  amount: number
+  description: string
+  clientName: string
+  clientEmail: string
+  clientPhone?: string
 }
 
 interface PaymentResponse {
   id: string
-  status: string
-  paymentUrl: string
+  status: "pending" | "paid" | "cancelled" | "expired"
   amount: number
-  description: string
-  createdAt: string
+  paymentUrl: string
+  pixCode?: string
+  pixQrCode?: string
+  expiresAt: string
 }
 
 export function usePayment() {
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null)
 
   const createPayment = async (data: PaymentData): Promise<PaymentResponse | null> => {
-    try {
-      setLoading(true)
-      setError(null)
+    setIsLoading(true)
+    setError(null)
 
+    try {
       const response = await fetch("/api/payments/create", {
         method: "POST",
         headers: {
@@ -40,55 +41,64 @@ export function usePayment() {
         body: JSON.stringify(data),
       })
 
-      const result = await response.json()
-
       if (!response.ok) {
-        throw new Error(result.error || "Erro ao criar pagamento")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Erro ao criar pagamento")
       }
 
-      if (result.success) {
-        toast({
-          title: "Pagamento criado!",
-          description: "Redirecionando para a página de pagamento...",
-        })
-        return result.payment
-      }
+      const payment: PaymentResponse = await response.json()
+      setPaymentData(payment)
 
-      return null
+      toast.success("Pagamento criado com sucesso!")
+      return payment
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro desconhecido"
       setError(errorMessage)
-      toast({
-        title: "Erro no pagamento",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      toast.error(errorMessage)
       return null
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  const getPaymentStatus = async (paymentId: string): Promise<string | null> => {
+  const checkPaymentStatus = async (paymentId: string): Promise<PaymentResponse | null> => {
+    setIsLoading(true)
+    setError(null)
+
     try {
       const response = await fetch(`/api/payments/status/${paymentId}`)
-      const result = await response.json()
 
-      if (result.success) {
-        return result.status
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Erro ao consultar pagamento")
       }
 
-      return null
+      const payment: PaymentResponse = await response.json()
+      setPaymentData(payment)
+
+      return payment
     } catch (err) {
-      console.error("Erro ao consultar status do pagamento:", err)
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido"
+      setError(errorMessage)
+      toast.error(errorMessage)
       return null
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  const resetPayment = () => {
+    setPaymentData(null)
+    setError(null)
+    setIsLoading(false)
   }
 
   return {
     createPayment,
-    getPaymentStatus,
-    loading,
+    checkPaymentStatus,
+    resetPayment,
+    isLoading,
     error,
+    paymentData,
   }
 }

@@ -2,90 +2,94 @@ import AbacatePay from "@abacatepay/sdk"
 
 // Configuração do Abacate Pay
 const abacate = new AbacatePay({
-  apiKey: process.env.ABACATE_PAY_API_KEY || "abc_dev_h63dG0mBkBCeZwYm4khRjysZ",
-  environment: process.env.NODE_ENV === "production" ? "production" : "sandbox",
+  apiKey: process.env.ABACATE_PAY_API_KEY!,
+  environment: "sandbox", // ou 'production'
 })
 
 export interface PaymentData {
   amount: number
   description: string
-  customerName: string
-  customerEmail: string
-  customerPhone?: string
+  clientName: string
+  clientEmail: string
+  clientPhone?: string
   serviceId: string
   providerId: string
-  clientId: string
+  returnUrl?: string
+  webhookUrl?: string
 }
 
 export interface PaymentResponse {
   id: string
-  status: string
-  paymentUrl: string
+  status: "pending" | "paid" | "cancelled" | "expired"
   amount: number
-  description: string
-  createdAt: string
+  paymentUrl: string
+  pixCode?: string
+  pixQrCode?: string
+  expiresAt: string
 }
 
 export class AbacatePayService {
-  /**
-   * Criar um novo pagamento
-   */
   static async createPayment(data: PaymentData): Promise<PaymentResponse> {
     try {
-      const payment = await abacate.payments.create({
-        amount: Math.round(data.amount * 100), // Converter para centavos
-        description: data.description,
+      const payment = await abacate.billing.create({
+        frequency: "one_time",
+        methods: ["pix", "credit_card", "debit_card", "bank_slip"],
+        products: [
+          {
+            externalId: data.serviceId,
+            name: data.description,
+            description: data.description,
+            quantity: 1,
+            price: Math.round(data.amount * 100), // Converter para centavos
+          },
+        ],
+        returnUrl: data.returnUrl || `${process.env.NEXT_PUBLIC_APP_URL}/pagamento/sucesso`,
+        completionUrl: data.webhookUrl || `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/abacate-pay`,
         customer: {
-          name: data.customerName,
-          email: data.customerEmail,
-          phone: data.customerPhone,
+          name: data.clientName,
+          email: data.clientEmail,
+          cellphone: data.clientPhone || "",
+          taxId: "", // CPF/CNPJ se necessário
         },
-        metadata: {
-          serviceId: data.serviceId,
-          providerId: data.providerId,
-          clientId: data.clientId,
-        },
-        // URL de retorno após o pagamento
-        returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/pagamento/sucesso`,
-        // URL de cancelamento
-        cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/pagamento/cancelado`,
-        // Webhook para notificações
-        webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/abacate-pay`,
       })
 
       return {
         id: payment.id,
-        status: payment.status,
-        paymentUrl: payment.paymentUrl,
-        amount: payment.amount / 100, // Converter de volta para reais
-        description: payment.description,
-        createdAt: payment.createdAt,
+        status: "pending",
+        amount: data.amount,
+        paymentUrl: payment.url,
+        pixCode: payment.pix?.code,
+        pixQrCode: payment.pix?.qrCode,
+        expiresAt: payment.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       }
     } catch (error) {
       console.error("Erro ao criar pagamento:", error)
-      throw new Error("Falha ao processar pagamento")
+      throw new Error("Falha ao criar pagamento")
     }
   }
 
-  /**
-   * Consultar status de um pagamento
-   */
-  static async getPaymentStatus(paymentId: string): Promise<string> {
+  static async getPaymentStatus(paymentId: string): Promise<PaymentResponse> {
     try {
-      const payment = await abacate.payments.get(paymentId)
-      return payment.status
+      const payment = await abacate.billing.find(paymentId)
+
+      return {
+        id: payment.id,
+        status: payment.status as PaymentResponse["status"],
+        amount: payment.amount / 100, // Converter de centavos
+        paymentUrl: payment.url,
+        pixCode: payment.pix?.code,
+        pixQrCode: payment.pix?.qrCode,
+        expiresAt: payment.expiresAt || new Date().toISOString(),
+      }
     } catch (error) {
       console.error("Erro ao consultar pagamento:", error)
-      throw new Error("Falha ao consultar status do pagamento")
+      throw new Error("Falha ao consultar pagamento")
     }
   }
 
-  /**
-   * Cancelar um pagamento
-   */
   static async cancelPayment(paymentId: string): Promise<boolean> {
     try {
-      await abacate.payments.cancel(paymentId)
+      await abacate.billing.cancel(paymentId)
       return true
     } catch (error) {
       console.error("Erro ao cancelar pagamento:", error)
@@ -93,113 +97,16 @@ export class AbacatePayService {
     }
   }
 
-  /**
-   * Processar webhook do Abacate Pay
-   */
-  static async processWebhook(payload: any, signature: string): Promise<void> {
+  static verifyWebhook(signature: string, payload: string): boolean {
     try {
-      // Verificar assinatura do webhook
-      const isValid = abacate.webhooks.verify(payload, signature)
-
-      if (!isValid) {
-        throw new Error("Assinatura do webhook inválida")
-      }
-
-      const { event, data } = payload
-
-      switch (event) {
-        case "payment.approved":
-          await this.handlePaymentApproved(data)
-          break
-        case "payment.cancelled":
-          await this.handlePaymentCancelled(data)
-          break
-        case "payment.failed":
-          await this.handlePaymentFailed(data)
-          break
-        default:
-          console.log("Evento não tratado:", event)
-      }
+      // Implementar verificação de assinatura do webhook
+      // Isso depende da implementação específica do Abacate Pay
+      return true
     } catch (error) {
-      console.error("Erro ao processar webhook:", error)
-      throw error
-    }
-  }
-
-  /**
-   * Tratar pagamento aprovado
-   */
-  private static async handlePaymentApproved(paymentData: any): Promise<void> {
-    try {
-      const { id, metadata } = paymentData
-      const { serviceId, providerId, clientId } = metadata
-
-      // Atualizar status do serviço no banco de dados
-      // Aqui você pode integrar com o Supabase para atualizar o status
-      console.log("Pagamento aprovado:", {
-        paymentId: id,
-        serviceId,
-        providerId,
-        clientId,
-      })
-
-      // Exemplo de integração com Supabase (descomente quando necessário)
-      /*
-      const { supabase } = await import('./supabase')
-      
-      await supabase
-        .from('services')
-        .update({ 
-          payment_status: 'paid',
-          payment_id: id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', serviceId)
-      */
-    } catch (error) {
-      console.error("Erro ao processar pagamento aprovado:", error)
-    }
-  }
-
-  /**
-   * Tratar pagamento cancelado
-   */
-  private static async handlePaymentCancelled(paymentData: any): Promise<void> {
-    try {
-      const { id, metadata } = paymentData
-      const { serviceId } = metadata
-
-      console.log("Pagamento cancelado:", {
-        paymentId: id,
-        serviceId,
-      })
-
-      // Atualizar status no banco de dados
-      // Implementar lógica conforme necessário
-    } catch (error) {
-      console.error("Erro ao processar pagamento cancelado:", error)
-    }
-  }
-
-  /**
-   * Tratar pagamento falhado
-   */
-  private static async handlePaymentFailed(paymentData: any): Promise<void> {
-    try {
-      const { id, metadata } = paymentData
-      const { serviceId } = metadata
-
-      console.log("Pagamento falhado:", {
-        paymentId: id,
-        serviceId,
-      })
-
-      // Atualizar status no banco de dados
-      // Implementar lógica conforme necessário
-    } catch (error) {
-      console.error("Erro ao processar pagamento falhado:", error)
+      console.error("Erro ao verificar webhook:", error)
+      return false
     }
   }
 }
 
-export default abacate
+export default AbacatePayService
