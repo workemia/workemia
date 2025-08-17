@@ -42,5 +42,5 @@ export function isDomainAuthorized(): boolean {
 }
 
 export function isGoogleOAuthAvailable(): boolean {
-  return isFirebaseConfigured() && isDomainAuthorized()
+  return isFirebaseConfigured()
 }

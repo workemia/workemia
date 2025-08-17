@@ -347,6 +347,11 @@ export default function LoginForm() {
         )}
 
         <div className="text-center">
+          <p className="text-sm text-gray-600 mb-2">
+            <Link href="/esqueceu-senha" className="text-blue-600 hover:underline font-medium">
+              Esqueceu sua senha?
+            </Link>
+          </p>
           <p className="text-sm text-gray-600">
             Não tem uma conta?{" "}
             <Link href="/cadastro" className="text-blue-600 hover:underline font-medium">
