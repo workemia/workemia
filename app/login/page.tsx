@@ -1,8 +1,6 @@
 "use client"
-
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useActionState } from "react"
+import { useFormStatus } from "react-dom"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,202 +8,53 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "@/hooks/use-toast"
-import { Eye, EyeOff, User, Briefcase, Mail, Lock } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { Eye, EyeOff, User, Briefcase, Mail, Lock, Loader2 } from "lucide-react"
+import { signIn } from "@/lib/actions"
+
+function SubmitButton({ userType }: { userType: string }) {
+  const { pending } = useFormStatus()
+
+  return (
+    <Button
+      type="submit"
+      className={`w-full h-11 ${userType === "provider" ? "bg-green-600 hover:bg-green-700" : ""}`}
+      disabled={pending}
+    >
+      {pending ? (
+        <>
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          Entrando...
+        </>
+      ) : (
+        <>
+          {userType === "provider" ? <Briefcase className="w-4 h-4 mr-2" /> : <User className="w-4 h-4 mr-2" />}
+          Entrar como {userType === "provider" ? "Prestador" : "Cliente"}
+        </>
+      )}
+    </Button>
+  )
+}
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [clientData, setClientData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false,
-  })
-  const [providerData, setProviderData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false,
-  })
-  const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("cliente")
   const [showClientPassword, setShowClientPassword] = useState(false)
   const [showProviderPassword, setShowProviderPassword] = useState(false)
-
-  const handleClientInputChange = (field: string, value: string | boolean) => {
-    setClientData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleProviderInputChange = (field: string, value: string | boolean) => {
-    setProviderData((prev) => ({ ...prev, [field]: value }))
-  }
+  const [clientState, clientAction] = useActionState(signIn, null)
+  const [providerState, providerAction] = useActionState(signIn, null)
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
   }
 
-  const handleClientSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateEmail(clientData.email)) {
-      toast({
-        title: "E-mail inválido",
-        description: "Por favor, insira um e-mail válido.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (clientData.password.length < 6) {
-      toast({
-        title: "Senha muito curta",
-        description: "A senha deve ter pelo menos 6 caracteres.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: clientData.email,
-        password: clientData.password,
-      })
-
-      if (error) {
-        toast({
-          title: "Erro no login",
-          description: error.message,
-          variant: "destructive",
-        })
-        return
-      }
-
-      if (data.user) {
-        // Verificar se o usuário é cliente
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", data.user.id)
-          .eq("user_type", "cliente")
-          .single()
-
-        if (userError || !userData) {
-          toast({
-            title: "Acesso negado",
-            description: "Esta conta não é de cliente.",
-            variant: "destructive",
-          })
-          await supabase.auth.signOut()
-          return
-        }
-
-        toast({
-          title: "Login realizado com sucesso!",
-          description: `Bem-vindo de volta, ${userData.name}!`,
-        })
-
-        router.push("/dashboard/cliente")
-      }
-    } catch (error) {
-      toast({
-        title: "Erro inesperado",
-        description: "Tente novamente mais tarde.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleProviderSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateEmail(providerData.email)) {
-      toast({
-        title: "E-mail inválido",
-        description: "Por favor, insira um e-mail válido.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (providerData.password.length < 6) {
-      toast({
-        title: "Senha muito curta",
-        description: "A senha deve ter pelo menos 6 caracteres.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: providerData.email,
-        password: providerData.password,
-      })
-
-      if (error) {
-        toast({
-          title: "Erro no login",
-          description: error.message,
-          variant: "destructive",
-        })
-        return
-      }
-
-      if (data.user) {
-        // Verificar se o usuário é prestador
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", data.user.id)
-          .eq("user_type", "prestador")
-          .single()
-
-        if (userError || !userData) {
-          toast({
-            title: "Acesso negado",
-            description: "Esta conta não é de prestador.",
-            variant: "destructive",
-          })
-          await supabase.auth.signOut()
-          return
-        }
-
-        toast({
-          title: "Login realizado com sucesso!",
-          description: `Bem-vindo de volta, ${userData.name}!`,
-        })
-
-        router.push("/dashboard/prestador")
-      }
-    } catch (error) {
-      toast({
-        title: "Erro inesperado",
-        description: "Tente novamente mais tarde.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleSocialLogin = (provider: string, userType: string) => {
-    toast({
-      title: "Em desenvolvimento",
-      description: "Login social será implementado em breve.",
-    })
+    // Toast notification for social login (not implemented yet)
+    console.log(`Social login with ${provider} for ${userType}`)
   }
 
   const handleForgotPassword = () => {
-    toast({
-      title: "Recuperação de senha",
-      description: "Um link de recuperação será enviado para seu e-mail.",
-    })
+    // Toast notification for forgot password (not implemented yet)
+    console.log("Forgot password clicked")
   }
 
   return (
@@ -237,7 +86,15 @@ export default function LoginPage() {
               </TabsList>
 
               <TabsContent value="cliente" className="space-y-4 mt-6">
-                <form onSubmit={handleClientSubmit} className="space-y-4">
+                <form action={clientAction} className="space-y-4">
+                  {clientState?.error && (
+                    <div className="bg-red-500/10 border border-red-500/50 text-red-700 px-4 py-3 rounded">
+                      {clientState.error}
+                    </div>
+                  )}
+
+                  <input type="hidden" name="userType" value="client" />
+
                   <div className="space-y-2">
                     <Label htmlFor="client-email" className="text-sm font-medium">
                       E-mail
@@ -246,10 +103,9 @@ export default function LoginPage() {
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="client-email"
+                        name="email"
                         type="email"
                         placeholder="seu@email.com"
-                        value={clientData.email}
-                        onChange={(e) => handleClientInputChange("email", e.target.value)}
                         className="pl-10"
                         required
                       />
@@ -264,10 +120,9 @@ export default function LoginPage() {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="client-password"
+                        name="password"
                         type={showClientPassword ? "text" : "password"}
                         placeholder="Sua senha"
-                        value={clientData.password}
-                        onChange={(e) => handleClientInputChange("password", e.target.value)}
                         className="pl-10 pr-10"
                         required
                       />
@@ -283,12 +138,7 @@ export default function LoginPage() {
 
                   <div className="flex items-center justify-between text-sm">
                     <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={clientData.rememberMe}
-                        onChange={(e) => handleClientInputChange("rememberMe", e.target.checked)}
-                        className="rounded border-gray-300"
-                      />
+                      <input type="checkbox" name="rememberMe" className="rounded border-gray-300" />
                       <span>Lembrar de mim</span>
                     </label>
                     <button type="button" onClick={handleForgotPassword} className="text-blue-600 hover:underline">
@@ -296,19 +146,7 @@ export default function LoginPage() {
                     </button>
                   </div>
 
-                  <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <i className="fas fa-spinner fa-spin mr-2"></i>
-                        Entrando...
-                      </>
-                    ) : (
-                      <>
-                        <User className="w-4 h-4 mr-2" />
-                        Entrar como Cliente
-                      </>
-                    )}
-                  </Button>
+                  <SubmitButton userType="client" />
                 </form>
 
                 <div className="space-y-2">
@@ -317,7 +155,6 @@ export default function LoginPage() {
                     className="w-full h-11 bg-transparent"
                     type="button"
                     onClick={() => handleSocialLogin("Google", "cliente")}
-                    disabled={isLoading}
                   >
                     <i className="fab fa-google mr-2 text-red-500"></i>
                     Continuar com Google
@@ -327,7 +164,6 @@ export default function LoginPage() {
                     className="w-full h-11 bg-transparent"
                     type="button"
                     onClick={() => handleSocialLogin("Facebook", "cliente")}
-                    disabled={isLoading}
                   >
                     <i className="fab fa-facebook mr-2 text-blue-600"></i>
                     Continuar com Facebook
@@ -336,7 +172,15 @@ export default function LoginPage() {
               </TabsContent>
 
               <TabsContent value="prestador" className="space-y-4 mt-6">
-                <form onSubmit={handleProviderSubmit} className="space-y-4">
+                <form action={providerAction} className="space-y-4">
+                  {providerState?.error && (
+                    <div className="bg-red-500/10 border border-red-500/50 text-red-700 px-4 py-3 rounded">
+                      {providerState.error}
+                    </div>
+                  )}
+
+                  <input type="hidden" name="userType" value="provider" />
+
                   <div className="space-y-2">
                     <Label htmlFor="provider-email" className="text-sm font-medium">
                       E-mail Profissional
@@ -345,10 +189,9 @@ export default function LoginPage() {
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="provider-email"
+                        name="email"
                         type="email"
                         placeholder="seu@email.com"
-                        value={providerData.email}
-                        onChange={(e) => handleProviderInputChange("email", e.target.value)}
                         className="pl-10"
                         required
                       />
@@ -363,10 +206,9 @@ export default function LoginPage() {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="provider-password"
+                        name="password"
                         type={showProviderPassword ? "text" : "password"}
                         placeholder="Sua senha"
-                        value={providerData.password}
-                        onChange={(e) => handleProviderInputChange("password", e.target.value)}
                         className="pl-10 pr-10"
                         required
                       />
@@ -382,12 +224,7 @@ export default function LoginPage() {
 
                   <div className="flex items-center justify-between text-sm">
                     <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={providerData.rememberMe}
-                        onChange={(e) => handleProviderInputChange("rememberMe", e.target.checked)}
-                        className="rounded border-gray-300"
-                      />
+                      <input type="checkbox" name="rememberMe" className="rounded border-gray-300" />
                       <span>Lembrar de mim</span>
                     </label>
                     <button type="button" onClick={handleForgotPassword} className="text-blue-600 hover:underline">
@@ -395,19 +232,7 @@ export default function LoginPage() {
                     </button>
                   </div>
 
-                  <Button type="submit" className="w-full h-11 bg-green-600 hover:bg-green-700" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <i className="fas fa-spinner fa-spin mr-2"></i>
-                        Entrando...
-                      </>
-                    ) : (
-                      <>
-                        <Briefcase className="w-4 h-4 mr-2" />
-                        Entrar como Prestador
-                      </>
-                    )}
-                  </Button>
+                  <SubmitButton userType="provider" />
                 </form>
 
                 <div className="space-y-2">
@@ -416,7 +241,6 @@ export default function LoginPage() {
                     className="w-full h-11 bg-transparent"
                     type="button"
                     onClick={() => handleSocialLogin("Google", "prestador")}
-                    disabled={isLoading}
                   >
                     <i className="fab fa-google mr-2 text-red-500"></i>
                     Continuar com Google
@@ -426,7 +250,6 @@ export default function LoginPage() {
                     className="w-full h-11 bg-transparent"
                     type="button"
                     onClick={() => handleSocialLogin("LinkedIn", "prestador")}
-                    disabled={isLoading}
                   >
                     <i className="fab fa-linkedin mr-2 text-blue-700"></i>
                     Continuar com LinkedIn

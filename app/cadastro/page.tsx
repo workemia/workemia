@@ -1,9 +1,6 @@
 "use client"
-
-import type React from "react"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useActionState } from "react"
+import { useFormStatus } from "react-dom"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,48 +8,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/hooks/use-toast"
+import { Loader2, UserPlus } from "lucide-react"
+import { signUp } from "@/lib/actions"
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+
+  return (
+    <Button type="submit" className="w-full" disabled={pending}>
+      {pending ? (
+        <>
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          Criando conta...
+        </>
+      ) : (
+        <>
+          <UserPlus className="w-4 h-4 mr-2" />
+          Criar conta
+        </>
+      )}
+    </Button>
+  )
+}
 
 export default function CadastroPage() {
-  const router = useRouter()
-  const [formData, setFormData] = useState({
-    nome: "",
-    email: "",
-    telefone: "",
-    password: "",
-    confirmPassword: "",
-    tipo: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "As senhas não coincidem.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
-
-    // Simular cadastro
-    setTimeout(() => {
-      setIsLoading(false)
-      toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Bem-vindo ao ServiceHub.",
-      })
-      router.push("/")
-    }, 1000)
-  }
+  const [userType, setUserType] = useState("")
+  const [state, formAction] = useActionState(signUp, null)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 flex items-center justify-center p-4">
@@ -69,50 +50,43 @@ export default function CadastroPage() {
             <CardTitle className="text-center">Cadastrar-se</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form action={formAction} className="space-y-4">
+              {state?.error && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-700 px-4 py-3 rounded">
+                  {state.error}
+                </div>
+              )}
+
+              {state?.success && (
+                <div className="bg-green-500/10 border border-green-500/50 text-green-700 px-4 py-3 rounded">
+                  {state.success}
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="nome">Nome completo</Label>
-                <Input
-                  id="nome"
-                  placeholder="Seu nome completo"
-                  value={formData.nome}
-                  onChange={(e) => handleInputChange("nome", e.target.value)}
-                  required
-                />
+                <Input id="nome" name="name" placeholder="Seu nome completo" required />
               </div>
 
               <div>
                 <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  required
-                />
+                <Input id="email" name="email" type="email" placeholder="seu@email.com" required />
               </div>
 
               <div>
                 <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  placeholder="(11) 99999-9999"
-                  value={formData.telefone}
-                  onChange={(e) => handleInputChange("telefone", e.target.value)}
-                  required
-                />
+                <Input id="telefone" name="phone" placeholder="(11) 99999-9999" />
               </div>
 
               <div>
                 <Label htmlFor="tipo">Tipo de conta</Label>
-                <Select value={formData.tipo} onValueChange={(value) => handleInputChange("tipo", value)}>
+                <Select name="userType" value={userType} onValueChange={setUserType} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo de conta" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cliente">Cliente</SelectItem>
-                    <SelectItem value="prestador">Prestador de Serviços</SelectItem>
+                    <SelectItem value="client">Cliente</SelectItem>
+                    <SelectItem value="provider">Prestador de Serviços</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -121,10 +95,10 @@ export default function CadastroPage() {
                 <Label htmlFor="password">Senha</Label>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
-                  placeholder="Sua senha"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  placeholder="Sua senha (mínimo 6 caracteres)"
+                  minLength={6}
                   required
                 />
               </div>
@@ -133,10 +107,10 @@ export default function CadastroPage() {
                 <Label htmlFor="confirmPassword">Confirmar senha</Label>
                 <Input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type="password"
                   placeholder="Confirme sua senha"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                  minLength={6}
                   required
                 />
               </div>
@@ -153,19 +127,7 @@ export default function CadastroPage() {
                 .
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin mr-2"></i>
-                    Criando conta...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-user-plus mr-2"></i>
-                    Criar conta
-                  </>
-                )}
-              </Button>
+              <SubmitButton />
             </form>
 
             <div className="mt-6">
