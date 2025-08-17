@@ -4,10 +4,6 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
-export async function signInWithOAuth(provider: "google" | "facebook" | "linkedin") {
-  return { error: `${provider} login is not configured. Please use email/password login.` }
-}
-
 export async function signIn(prevState: any, formData: FormData) {
   if (!formData) {
     return { error: "Form data is missing" }
@@ -37,12 +33,12 @@ export async function signIn(prevState: any, formData: FormData) {
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("user_type")
-        .eq("id", data.user.id)
+        .eq("firebase_uid", data.user.id)
         .single()
 
       if (!userError && userData) {
         revalidatePath("/", "layout")
-        if (userData.user_type === "provider") {
+        if (userData.user_type === "prestador") {
           redirect("/dashboard/prestador")
         } else {
           redirect("/dashboard/cliente")
@@ -67,11 +63,10 @@ export async function signUp(prevState: any, formData: FormData) {
   const password = formData.get("password")
   const confirmPassword = formData.get("confirmPassword")
   const name = formData.get("name")
-  const phone = formData.get("phone")
-  const userType = formData.get("userType") || "client"
+  const userType = formData.get("userType") || "cliente"
 
-  if (!email || !password || !name || !userType) {
-    return { error: "Email, password, name and user type are required" }
+  if (!email || !password || !name) {
+    return { error: "Email, password and name are required" }
   }
 
   if (password !== confirmPassword) {
@@ -85,12 +80,8 @@ export async function signUp(prevState: any, formData: FormData) {
       email: email.toString(),
       password: password.toString(),
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
-        data: {
-          name: name.toString(),
-          user_type: userType.toString(),
-          phone: phone?.toString() || null,
-        },
+        emailRedirectTo:
+          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
       },
     })
 
@@ -98,16 +89,13 @@ export async function signUp(prevState: any, formData: FormData) {
       return { error: error.message }
     }
 
-    // Create user profile
+    // Create user profile in users table
     if (data.user) {
       const { error: profileError } = await supabase.from("users").insert({
-        id: data.user.id,
+        firebase_uid: data.user.id,
         email: email.toString(),
-        name: name.toString(),
-        phone: phone?.toString() || null,
+        display_name: name.toString(),
         user_type: userType.toString(),
-        active: true,
-        verified: false,
       })
 
       if (profileError) {
@@ -115,7 +103,7 @@ export async function signUp(prevState: any, formData: FormData) {
       }
 
       // If user is a provider, create provider profile
-      if (userType === "provider") {
+      if (userType === "prestador") {
         const { error: providerError } = await supabase.from("providers").insert({
           id: data.user.id,
           profession: "Não especificado",
@@ -148,4 +136,34 @@ export async function signOut() {
   await supabase.auth.signOut()
   revalidatePath("/", "layout")
   redirect("/login")
+}
+
+export async function resetPassword(prevState: any, formData: FormData) {
+  if (!formData) {
+    return { error: "Form data is missing" }
+  }
+
+  const email = formData.get("email")
+
+  if (!email) {
+    return { error: "Email is required" }
+  }
+
+  const supabase = await createClient()
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.toString(), {
+      redirectTo:
+        process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+    })
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    return { success: "Check your email for password reset instructions." }
+  } catch (error) {
+    console.error("Password reset error:", error)
+    return { error: "An unexpected error occurred. Please try again." }
+  }
 }

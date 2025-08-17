@@ -16,9 +16,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (data.user) {
-      const { data: userData } = await supabase.from("users").select("user_type").eq("id", data.user.id).single()
+      const { data: userData } = await supabase
+        .from("users")
+        .select("user_type")
+        .eq("firebase_uid", data.user.id)
+        .single()
 
-      if (userData?.user_type === "provider") {
+      if (userData?.user_type === "prestador") {
         return NextResponse.redirect(`${requestUrl.origin}/dashboard/prestador`)
       } else {
         return NextResponse.redirect(`${requestUrl.origin}/dashboard/cliente`)

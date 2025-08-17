@@ -37,14 +37,6 @@ export async function updateSession(request: NextRequest) {
     },
   )
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
   // Check if this is an auth callback
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
@@ -56,15 +48,22 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url))
   }
 
+  // Refresh session if expired - required for Server Components
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   // Protected routes - allow access to auth pages and public pages
-  const isAuthRoute =
+  const isPublicRoute =
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/cadastro") ||
     request.nextUrl.pathname === "/" ||
     request.nextUrl.pathname.startsWith("/servicos") ||
-    request.nextUrl.pathname.startsWith("/como-funciona")
+    request.nextUrl.pathname.startsWith("/como-funciona") ||
+    request.nextUrl.pathname.startsWith("/auth/callback") ||
+    request.nextUrl.pathname.startsWith("/esqueceu-senha")
 
-  if (!isAuthRoute && !user) {
+  if (!isPublicRoute && !user) {
     // Redirect to login if trying to access protected routes without authentication
     const redirectUrl = new URL("/login", request.url)
     return NextResponse.redirect(redirectUrl)

@@ -5,7 +5,6 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { NotificationsProvider } from "@/contexts/notifications-context"
-import { AuthProvider } from "@/contexts/auth-context"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
@@ -37,12 +36,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <Suspense fallback={null}>
-            <AuthProvider>
-              <NotificationsProvider>
-                {children}
-                <Toaster />
-              </NotificationsProvider>
-            </AuthProvider>
+            <NotificationsProvider>
+              {children}
+              <Toaster />
+            </NotificationsProvider>
           </Suspense>
         </ThemeProvider>
         <SpeedInsights />
