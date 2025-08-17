@@ -33,7 +33,9 @@ export default function LoginForm() {
     const userType = formData.get("userType") as string
 
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const result = await signInWithEmailAndPassword(auth, email, password)
+      console.log("[v0] Email login successful:", result.user.email)
+
       // Redirect based on user type
       if (userType === "provider") {
         router.push("/dashboard/prestador")
@@ -41,7 +43,19 @@ export default function LoginForm() {
         router.push("/dashboard/cliente")
       }
     } catch (error: any) {
-      setError("Email ou senha incorretos")
+      console.log("[v0] Email login error:", error.code, error.message)
+
+      if (error.code === "auth/user-not-found") {
+        setError("Usuário não encontrado")
+      } else if (error.code === "auth/wrong-password") {
+        setError("Senha incorreta")
+      } else if (error.code === "auth/invalid-email") {
+        setError("Email inválido")
+      } else if (error.code === "auth/too-many-requests") {
+        setError("Muitas tentativas. Tente novamente mais tarde.")
+      } else {
+        setError("Email ou senha incorretos")
+      }
     } finally {
       setLoading(false)
     }
@@ -52,10 +66,25 @@ export default function LoginForm() {
     setError("")
 
     try {
-      await signInWithPopup(auth, googleProvider)
-      router.push("/dashboard/cliente") // Default to client dashboard
+      const result = await signInWithPopup(auth, googleProvider)
+      const user = result.user
+
+      console.log("[v0] Google login successful:", user.email)
+
+      // Default to client dashboard for Google login
+      router.push("/dashboard/cliente")
     } catch (error: any) {
-      setError("Erro ao fazer login com Google")
+      console.log("[v0] Google login error:", error.code, error.message)
+
+      if (error.code === "auth/popup-closed-by-user") {
+        setError("Login cancelado pelo usuário")
+      } else if (error.code === "auth/popup-blocked") {
+        setError("Pop-up bloqueado pelo navegador. Permita pop-ups para este site.")
+      } else if (error.code === "auth/cancelled-popup-request") {
+        setError("Solicitação de login cancelada")
+      } else {
+        setError("Erro ao fazer login com Google. Tente novamente.")
+      }
     } finally {
       setLoading(false)
     }
