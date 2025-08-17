@@ -383,21 +383,21 @@ export default function ServicosPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/">
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
                 </Button>
               </Link>
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Link href="/" className="hover:text-blue-600 flex items-center gap-1">
+                <Link href="/" className="hover:text-blue-600 flex items-center gap-1 transition-colors">
                   <Home className="h-4 w-4" />
                   ServiceHub
                 </Link>
-                <span>/</span>
+                <span className="text-gray-400">/</span>
                 <span className="text-gray-900 font-medium">Serviços</span>
               </div>
             </div>
-            <h1 className="text-xl font-semibold">Encontre Prestadores</h1>
+            <h1 className="text-xl font-semibold text-gray-900">Encontre Prestadores</h1>
           </div>
         </div>
       </div>
