@@ -1,4 +1,4 @@
-import { RegisterForm } from "@/components/auth/register-form"
+import SignUpForm from "@/components/sign-up-form"
 import Link from "next/link"
 
 export default function RegisterPage() {
@@ -14,7 +14,7 @@ export default function RegisterPage() {
             </Link>
           </p>
         </div>
-        <RegisterForm />
+        <SignUpForm />
       </div>
     </div>
   )

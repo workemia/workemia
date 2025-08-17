@@ -1,13 +1,43 @@
 "use client"
 
-import { useAuth } from "@/contexts/auth-context"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
+import type { User } from "@supabase/supabase-js"
 
 export default function DashboardPage() {
-  const { user, loading, signOut } = useAuth()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+
+      if (!user) {
+        router.push("/login")
+      }
+    }
+
+    checkAuth()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null)
+      if (!session?.user) {
+        router.push("/login")
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [router])
 
   if (loading) {
     return (
@@ -21,12 +51,11 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    router.push("/login")
     return null
   }
 
   const handleSignOut = async () => {
-    await signOut()
+    await supabase.auth.signOut()
     router.push("/")
   }
 
@@ -42,13 +71,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Informações do Usuário</CardTitle>
-              <CardDescription>Dados sincronizados entre Firebase e Supabase</CardDescription>
+              <CardDescription>Dados do Supabase Auth</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Nome</label>
-                <p className="text-lg">{user.display_name || "Não informado"}</p>
-              </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Email</label>
                 <p className="text-lg">{user.email}</p>
@@ -58,12 +83,8 @@ export default function DashboardPage() {
                 <p className="text-sm text-gray-600 font-mono">{user.id}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Firebase UID</label>
-                <p className="text-sm text-gray-600 font-mono">{user.firebase_uid}</p>
-              </div>
-              <div>
                 <label className="text-sm font-medium text-gray-500">Criado em</label>
-                <p className="text-sm text-gray-600">{new Date(user.created_at).toLocaleDateString("pt-BR")}</p>
+                <p className="text-sm text-gray-600">{new Date(user.created_at!).toLocaleDateString("pt-BR")}</p>
               </div>
             </CardContent>
           </Card>
