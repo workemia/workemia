@@ -1,5 +1,5 @@
 "use client"
-import { useState, useActionState } from "react"
+import { useState } from "react"
 import { useFormStatus } from "react-dom"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Eye, EyeOff, User, Briefcase, Mail, Lock, Loader2 } from "lucide-react"
-import { signIn, signInWithOAuth } from "@/lib/actions"
 
 function SubmitButton({ userType }: { userType: string }) {
   const { pending } = useFormStatus()
@@ -39,8 +38,8 @@ export default function LoginPage() {
   const [activeTab, setActiveTab] = useState("cliente")
   const [showClientPassword, setShowClientPassword] = useState(false)
   const [showProviderPassword, setShowProviderPassword] = useState(false)
-  const [clientState, clientAction] = useActionState(signIn, null)
-  const [providerState, providerAction] = useActionState(signIn, null)
+  const [clientState, clientAction] = useState(null)
+  const [providerState, providerAction] = useState(null)
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -49,7 +48,8 @@ export default function LoginPage() {
 
   const handleSocialLogin = async (provider: "google" | "facebook" | "linkedin", userType: string) => {
     try {
-      await signInWithOAuth(provider)
+      // Placeholder for OAuth login logic
+      console.log(`Logging in with ${provider} as ${userType}`)
     } catch (error) {
       console.error(`${provider} login error:`, error)
     }
@@ -151,27 +151,6 @@ export default function LoginPage() {
 
                   <SubmitButton userType="client" />
                 </form>
-
-                <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    className="w-full h-11 bg-transparent"
-                    type="button"
-                    onClick={() => handleSocialLogin("google", "cliente")}
-                  >
-                    <i className="fab fa-google mr-2 text-red-500"></i>
-                    Continuar com Google
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full h-11 bg-transparent"
-                    type="button"
-                    onClick={() => handleSocialLogin("facebook", "cliente")}
-                  >
-                    <i className="fab fa-facebook mr-2 text-blue-600"></i>
-                    Continuar com Facebook
-                  </Button>
-                </div>
               </TabsContent>
 
               <TabsContent value="prestador" className="space-y-4 mt-6">
@@ -237,27 +216,6 @@ export default function LoginPage() {
 
                   <SubmitButton userType="provider" />
                 </form>
-
-                <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    className="w-full h-11 bg-transparent"
-                    type="button"
-                    onClick={() => handleSocialLogin("google", "prestador")}
-                  >
-                    <i className="fab fa-google mr-2 text-red-500"></i>
-                    Continuar com Google
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full h-11 bg-transparent"
-                    type="button"
-                    onClick={() => handleSocialLogin("linkedin", "prestador")}
-                  >
-                    <i className="fab fa-linkedin mr-2 text-blue-700"></i>
-                    Continuar com LinkedIn
-                  </Button>
-                </div>
               </TabsContent>
             </Tabs>
 

@@ -5,23 +5,7 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
 export async function signInWithOAuth(provider: "google" | "facebook" | "linkedin") {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
-    },
-  })
-
-  if (error) {
-    console.error("OAuth error:", error)
-    return { error: error.message }
-  }
-
-  if (data.url) {
-    redirect(data.url)
-  }
+  return { error: `${provider} login is not configured. Please use email/password login.` }
 }
 
 export async function signIn(prevState: any, formData: FormData) {
