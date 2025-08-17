@@ -33,6 +33,7 @@ import { supabase } from "@/lib/supabase"
 import type { Database } from "@/lib/database.types"
 import { toast } from "@/components/ui/use-toast"
 import Link from "next/link"
+import { Footer } from "@/components/footer"
 
 type Category = Database["public"]["Tables"]["categories"]["Row"]
 
@@ -786,6 +787,8 @@ export default function ServicosPage() {
           )}
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }
