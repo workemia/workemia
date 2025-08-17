@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, UserPlus } from "lucide-react"
-import { signUp } from "@/lib/actions"
+import { signUp, signInWithOAuth } from "@/lib/actions"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -34,6 +34,14 @@ function SubmitButton() {
 export default function CadastroPage() {
   const [userType, setUserType] = useState("")
   const [state, formAction] = useActionState(signUp, null)
+
+  const handleSocialSignUp = async (provider: "google" | "facebook") => {
+    try {
+      await signInWithOAuth(provider)
+    } catch (error) {
+      console.error(`${provider} signup error:`, error)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 flex items-center justify-center p-4">
@@ -143,11 +151,21 @@ export default function CadastroPage() {
             </div>
 
             <div className="mt-4 space-y-2">
-              <Button variant="outline" className="w-full bg-transparent" type="button">
+              <Button
+                variant="outline"
+                className="w-full bg-transparent"
+                type="button"
+                onClick={() => handleSocialSignUp("google")}
+              >
                 <i className="fab fa-google mr-2"></i>
                 Continuar com Google
               </Button>
-              <Button variant="outline" className="w-full bg-transparent" type="button">
+              <Button
+                variant="outline"
+                className="w-full bg-transparent"
+                type="button"
+                onClick={() => handleSocialSignUp("facebook")}
+              >
                 <i className="fab fa-facebook mr-2"></i>
                 Continuar com Facebook
               </Button>

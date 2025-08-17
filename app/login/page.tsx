@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Eye, EyeOff, User, Briefcase, Mail, Lock, Loader2 } from "lucide-react"
-import { signIn } from "@/lib/actions"
+import { signIn, signInWithOAuth } from "@/lib/actions"
 
 function SubmitButton({ userType }: { userType: string }) {
   const { pending } = useFormStatus()
@@ -47,13 +47,16 @@ export default function LoginPage() {
     return emailRegex.test(email)
   }
 
-  const handleSocialLogin = (provider: string, userType: string) => {
-    // Toast notification for social login (not implemented yet)
-    console.log(`Social login with ${provider} for ${userType}`)
+  const handleSocialLogin = async (provider: "google" | "facebook" | "linkedin", userType: string) => {
+    try {
+      await signInWithOAuth(provider)
+    } catch (error) {
+      console.error(`${provider} login error:`, error)
+    }
   }
 
   const handleForgotPassword = () => {
-    // Toast notification for forgot password (not implemented yet)
+    // TODO: Implementar recuperação de senha
     console.log("Forgot password clicked")
   }
 
@@ -154,7 +157,7 @@ export default function LoginPage() {
                     variant="outline"
                     className="w-full h-11 bg-transparent"
                     type="button"
-                    onClick={() => handleSocialLogin("Google", "cliente")}
+                    onClick={() => handleSocialLogin("google", "cliente")}
                   >
                     <i className="fab fa-google mr-2 text-red-500"></i>
                     Continuar com Google
@@ -163,7 +166,7 @@ export default function LoginPage() {
                     variant="outline"
                     className="w-full h-11 bg-transparent"
                     type="button"
-                    onClick={() => handleSocialLogin("Facebook", "cliente")}
+                    onClick={() => handleSocialLogin("facebook", "cliente")}
                   >
                     <i className="fab fa-facebook mr-2 text-blue-600"></i>
                     Continuar com Facebook
@@ -240,7 +243,7 @@ export default function LoginPage() {
                     variant="outline"
                     className="w-full h-11 bg-transparent"
                     type="button"
-                    onClick={() => handleSocialLogin("Google", "prestador")}
+                    onClick={() => handleSocialLogin("google", "prestador")}
                   >
                     <i className="fab fa-google mr-2 text-red-500"></i>
                     Continuar com Google
@@ -249,7 +252,7 @@ export default function LoginPage() {
                     variant="outline"
                     className="w-full h-11 bg-transparent"
                     type="button"
-                    onClick={() => handleSocialLogin("LinkedIn", "prestador")}
+                    onClick={() => handleSocialLogin("linkedin", "prestador")}
                   >
                     <i className="fab fa-linkedin mr-2 text-blue-700"></i>
                     Continuar com LinkedIn

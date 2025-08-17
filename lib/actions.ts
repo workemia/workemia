@@ -4,6 +4,26 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
+export async function signInWithOAuth(provider: "google" | "facebook" | "linkedin") {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+    },
+  })
+
+  if (error) {
+    console.error("OAuth error:", error)
+    return { error: error.message }
+  }
+
+  if (data.url) {
+    redirect(data.url)
+  }
+}
+
 export async function signIn(prevState: any, formData: FormData) {
   if (!formData) {
     return { error: "Form data is missing" }
@@ -61,11 +81,17 @@ export async function signUp(prevState: any, formData: FormData) {
 
   const email = formData.get("email")
   const password = formData.get("password")
+  const confirmPassword = formData.get("confirmPassword")
   const name = formData.get("name")
+  const phone = formData.get("phone")
   const userType = formData.get("userType") || "client"
 
-  if (!email || !password || !name) {
-    return { error: "Email, password and name are required" }
+  if (!email || !password || !name || !userType) {
+    return { error: "Email, password, name and user type are required" }
+  }
+
+  if (password !== confirmPassword) {
+    return { error: "Passwords do not match" }
   }
 
   const supabase = await createClient()
@@ -75,8 +101,12 @@ export async function signUp(prevState: any, formData: FormData) {
       email: email.toString(),
       password: password.toString(),
       options: {
-        emailRedirectTo:
-          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${process.env.NEXT_PUBLIC_APP_URL}/login`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+        data: {
+          name: name.toString(),
+          user_type: userType.toString(),
+          phone: phone?.toString() || null,
+        },
       },
     })
 
@@ -90,6 +120,7 @@ export async function signUp(prevState: any, formData: FormData) {
         id: data.user.id,
         email: email.toString(),
         name: name.toString(),
+        phone: phone?.toString() || null,
         user_type: userType.toString(),
         active: true,
         verified: false,
