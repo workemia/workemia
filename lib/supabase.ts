@@ -32,8 +32,16 @@ function createDummyClient() {
     eq: () => dummyQueryBuilder,
     order: () => dummyQueryBuilder,
     limit: () => dummyQueryBuilder,
+    insert: () => dummyQueryBuilder,
+    update: () => dummyQueryBuilder,
     single: () => Promise.resolve({ data: null, error: null }),
     then: (resolve: any) => resolve({ data: [], error: null }),
+  }
+
+  const dummyChannel = {
+    on: () => dummyChannel,
+    subscribe: () => dummyChannel,
+    unsubscribe: () => Promise.resolve({ error: null }),
   }
 
   return {
@@ -45,6 +53,8 @@ function createDummyClient() {
       signOut: () => Promise.resolve({ error: null }),
       getUser: () => Promise.resolve({ data: { user: null }, error: null }),
     },
+    channel: () => dummyChannel,
+    removeChannel: () => Promise.resolve({ error: null }),
   }
 }
 

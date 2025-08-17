@@ -12,7 +12,8 @@ import { Eye, EyeOff, User, Briefcase, Mail, Lock, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth"
-import { auth, googleProvider } from "@/lib/firebase"
+import { auth, googleProvider, isFirebaseConfigured, isGoogleOAuthAvailable } from "@/lib/firebase"
+import { supabase } from "@/lib/supabase"
 
 export default function LoginForm() {
   const router = useRouter()
@@ -22,8 +23,65 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  const syncUserWithSupabase = async (firebaseUser: any, userType: "cliente" | "prestador") => {
+    console.log("[v0] Sincronizando usuário com Supabase:", firebaseUser.email)
+
+    // Verificar se usuário já existe no Supabase
+    const { data: existingUser } = await supabase.from("users").select("*").eq("email", firebaseUser.email).single()
+
+    if (existingUser) {
+      console.log("[v0] Usuário já existe no Supabase")
+      return existingUser.user_type
+    }
+
+    // Criar novo usuário no Supabase se não existir
+    const { data: newUser, error } = await supabase
+      .from("users")
+      .insert({
+        id: firebaseUser.uid,
+        email: firebaseUser.email,
+        name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Usuário",
+        user_type: userType,
+        avatar_url: firebaseUser.photoURL,
+        verified: firebaseUser.emailVerified,
+        active: true,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error("[v0] Erro ao criar usuário no Supabase:", error)
+      return userType // Retorna o tipo solicitado mesmo se falhar
+    }
+
+    // Se for prestador, criar perfil de prestador
+    if (userType === "prestador") {
+      await supabase.from("providers").insert({
+        id: firebaseUser.uid,
+        bio: "Novo prestador de serviços",
+        experience: "iniciante",
+        hourly_rate: 50,
+        rating: 5,
+        total_reviews: 0,
+        completed_jobs: 0,
+        acceptance_rate: 100,
+        response_time: "< 1 hora",
+        work_radius: 10,
+        joined_year: new Date().getFullYear(),
+      })
+    }
+
+    return userType
+  }
+
   const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    if (!isFirebaseConfigured()) {
+      setError("Firebase não configurado")
+      return
+    }
+
     setLoading(true)
     setError("")
 
@@ -31,13 +89,16 @@ export default function LoginForm() {
     const email = formData.get("email") as string
     const password = formData.get("password") as string
     const userType = formData.get("userType") as string
+    const finalUserType = userType === "provider" ? "prestador" : "cliente"
 
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password)
+      const result = await signInWithEmailAndPassword(auth!, email, password)
       console.log("[v0] Email login successful:", result.user.email)
 
-      // Redirect based on user type
-      if (userType === "provider") {
+      const actualUserType = await syncUserWithSupabase(result.user, finalUserType)
+
+      // Redirect based on actual user type from database
+      if (actualUserType === "prestador") {
         router.push("/dashboard/prestador")
       } else {
         router.push("/dashboard/cliente")
@@ -46,15 +107,17 @@ export default function LoginForm() {
       console.log("[v0] Email login error:", error.code, error.message)
 
       if (error.code === "auth/user-not-found") {
-        setError("Usuário não encontrado")
+        setError("Usuário não encontrado. Verifique o email ou crie uma conta.")
       } else if (error.code === "auth/wrong-password") {
-        setError("Senha incorreta")
+        setError("Senha incorreta. Tente novamente.")
       } else if (error.code === "auth/invalid-email") {
-        setError("Email inválido")
+        setError("Email inválido. Verifique o formato do email.")
       } else if (error.code === "auth/too-many-requests") {
         setError("Muitas tentativas. Tente novamente mais tarde.")
+      } else if (error.code === "auth/invalid-credential") {
+        setError("Email ou senha incorretos.")
       } else {
-        setError("Email ou senha incorretos")
+        setError("Erro ao fazer login. Tente novamente.")
       }
     } finally {
       setLoading(false)
@@ -62,26 +125,42 @@ export default function LoginForm() {
   }
 
   const handleGoogleLogin = async () => {
+    if (!isGoogleOAuthAvailable()) {
+      setError("Google OAuth não disponível. Configure o domínio no Firebase Console ou use login por email.")
+      return
+    }
+
     setLoading(true)
     setError("")
 
     try {
-      const result = await signInWithPopup(auth, googleProvider)
+      const result = await signInWithPopup(auth!, googleProvider!)
       const user = result.user
 
       console.log("[v0] Google login successful:", user.email)
 
-      // Default to client dashboard for Google login
-      router.push("/dashboard/cliente")
+      const userType = activeTab === "prestador" ? "prestador" : "cliente"
+      const actualUserType = await syncUserWithSupabase(user, userType)
+
+      // Redirect based on actual user type
+      if (actualUserType === "prestador") {
+        router.push("/dashboard/prestador")
+      } else {
+        router.push("/dashboard/cliente")
+      }
     } catch (error: any) {
       console.log("[v0] Google login error:", error.code, error.message)
 
-      if (error.code === "auth/popup-closed-by-user") {
-        setError("Login cancelado pelo usuário")
+      if (error.code === "auth/unauthorized-domain") {
+        setError(
+          "Domínio não autorizado. Adicione 'v0-teste1-opal.vercel.app' aos domínios autorizados no Firebase Console.",
+        )
+      } else if (error.code === "auth/popup-closed-by-user") {
+        setError("Login cancelado pelo usuário.")
       } else if (error.code === "auth/popup-blocked") {
-        setError("Pop-up bloqueado pelo navegador. Permita pop-ups para este site.")
+        setError("Pop-up bloqueado. Permita pop-ups para este site.")
       } else if (error.code === "auth/cancelled-popup-request") {
-        setError("Solicitação de login cancelada")
+        setError("Solicitação de login cancelada.")
       } else {
         setError("Erro ao fazer login com Google. Tente novamente.")
       }
@@ -234,7 +313,12 @@ export default function LoginForm() {
       <div className="mt-6">
         <Separator className="my-4" />
 
-        <Button onClick={handleGoogleLogin} variant="outline" className="w-full mb-4 bg-transparent" disabled={loading}>
+        <Button
+          onClick={handleGoogleLogin}
+          variant="outline"
+          className="w-full mb-4 bg-transparent"
+          disabled={loading || !isGoogleOAuthAvailable()}
+        >
           <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
@@ -253,8 +337,14 @@ export default function LoginForm() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Continuar com Google
+          {isGoogleOAuthAvailable() ? "Continuar com Google" : "Google OAuth não disponível"}
         </Button>
+
+        {!isGoogleOAuthAvailable() && (
+          <div className="bg-yellow-500/10 border border-yellow-500/50 text-yellow-700 px-3 py-2 rounded text-xs mb-4">
+            Para usar Google OAuth, adicione 'v0-teste1-opal.vercel.app' aos domínios autorizados no Firebase Console.
+          </div>
+        )}
 
         <div className="text-center">
           <p className="text-sm text-gray-600">

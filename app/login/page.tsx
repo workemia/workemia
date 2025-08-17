@@ -8,6 +8,10 @@ export default function LoginPage() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">ServiceHub</h1>
             <p className="text-gray-600">Entre na sua conta</p>
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+              <strong>Configuração necessária:</strong> Para usar Google OAuth, adicione o domínio atual aos domínios
+              autorizados no Firebase Console.
+            </div>
           </div>
           <LoginForm />
         </div>
