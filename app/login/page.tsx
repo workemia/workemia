@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -13,6 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/hooks/use-toast"
 import { Eye, EyeOff, User, Briefcase, Mail, Lock } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -67,34 +67,56 @@ export default function LoginPage() {
 
     setIsLoading(true)
 
-    // Simular autenticação do cliente
-    setTimeout(() => {
-      setIsLoading(false)
-
-      // Simular dados do usuário logado
-      const userData = {
-        id: "client_123",
-        name: "João Silva",
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: clientData.email,
-        type: "cliente",
-        avatar: "/placeholder.svg?height=40&width=40",
-      }
-
-      // Salvar dados do usuário no localStorage
-      localStorage.setItem("user", JSON.stringify(userData))
-
-      if (clientData.rememberMe) {
-        localStorage.setItem("rememberLogin", "true")
-      }
-
-      toast({
-        title: "Login realizado com sucesso!",
-        description: `Bem-vindo de volta, ${userData.name}!`,
+        password: clientData.password,
       })
 
-      // Redirecionar para dashboard do cliente
-      router.push("/dashboard/cliente")
-    }, 1500)
+      if (error) {
+        toast({
+          title: "Erro no login",
+          description: error.message,
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (data.user) {
+        // Verificar se o usuário é cliente
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", data.user.id)
+          .eq("user_type", "cliente")
+          .single()
+
+        if (userError || !userData) {
+          toast({
+            title: "Acesso negado",
+            description: "Esta conta não é de cliente.",
+            variant: "destructive",
+          })
+          await supabase.auth.signOut()
+          return
+        }
+
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo de volta, ${userData.name}!`,
+        })
+
+        router.push("/dashboard/cliente")
+      }
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleProviderSubmit = async (e: React.FormEvent) => {
@@ -120,67 +142,63 @@ export default function LoginPage() {
 
     setIsLoading(true)
 
-    // Simular autenticação do prestador
-    setTimeout(() => {
-      setIsLoading(false)
-
-      // Simular dados do prestador logado
-      const userData = {
-        id: "provider_456",
-        name: "Maria Santos",
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: providerData.email,
-        type: "prestador",
-        service: "Limpeza Residencial",
-        avatar: "/placeholder.svg?height=40&width=40",
-      }
-
-      // Salvar dados do usuário no localStorage
-      localStorage.setItem("user", JSON.stringify(userData))
-
-      if (providerData.rememberMe) {
-        localStorage.setItem("rememberLogin", "true")
-      }
-
-      toast({
-        title: "Login realizado com sucesso!",
-        description: `Bem-vindo de volta, ${userData.name}!`,
+        password: providerData.password,
       })
 
-      // Redirecionar para dashboard do prestador
-      router.push("/dashboard/prestador")
-    }, 1500)
+      if (error) {
+        toast({
+          title: "Erro no login",
+          description: error.message,
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (data.user) {
+        // Verificar se o usuário é prestador
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", data.user.id)
+          .eq("user_type", "prestador")
+          .single()
+
+        if (userError || !userData) {
+          toast({
+            title: "Acesso negado",
+            description: "Esta conta não é de prestador.",
+            variant: "destructive",
+          })
+          await supabase.auth.signOut()
+          return
+        }
+
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo de volta, ${userData.name}!`,
+        })
+
+        router.push("/dashboard/prestador")
+      }
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleSocialLogin = (provider: string, userType: string) => {
-    setIsLoading(true)
-
     toast({
-      title: `Conectando com ${provider}`,
-      description: `Redirecionando para autenticação...`,
+      title: "Em desenvolvimento",
+      description: "Login social será implementado em breve.",
     })
-
-    // Simular login social
-    setTimeout(() => {
-      setIsLoading(false)
-
-      const userData = {
-        id: `${userType}_social_${Date.now()}`,
-        name:
-          provider === "Google" ? "Usuário Google" : provider === "Facebook" ? "Usuário Facebook" : "Usuário LinkedIn",
-        email: `usuario@${provider.toLowerCase()}.com`,
-        type: userType,
-        avatar: "/placeholder.svg?height=40&width=40",
-      }
-
-      localStorage.setItem("user", JSON.stringify(userData))
-
-      toast({
-        title: "Login realizado com sucesso!",
-        description: `Conectado via ${provider}!`,
-      })
-
-      router.push(userType === "cliente" ? "/dashboard/cliente" : "/dashboard/prestador")
-    }, 2000)
   }
 
   const handleForgotPassword = () => {
