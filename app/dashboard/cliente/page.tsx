@@ -1,8 +1,10 @@
 "use client"
 
 import type React from "react"
+import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
-import { useState, useRef } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -27,7 +29,6 @@ import {
   Phone,
   MessageCircle,
   Calendar,
-  X,
   Heart,
   CreditCard,
   Plus,
@@ -36,10 +37,6 @@ import {
   DollarSign,
   CheckCircle,
   Bell,
-  Settings,
-  Camera,
-  Edit,
-  Save,
 } from "lucide-react"
 
 interface Service {
@@ -73,6 +70,9 @@ interface Provider {
 }
 
 export default function ClientDashboard() {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
@@ -382,6 +382,48 @@ export default function ClientDashboard() {
       default:
         return "bg-gray-100 text-gray-800"
     }
+  }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        router.push("/login")
+        return
+      }
+
+      setUser(user)
+      setLoading(false)
+    }
+
+    checkAuth()
+
+    // Listen for auth changes
+    const supabase = createClient()
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        router.push("/login")
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [router])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -811,52 +853,19 @@ export default function ClientDashboard() {
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-gray-900">{selectedService.price}</p>
-                        <p className="text-sm text-gray-500">{selectedService.estimatedTime}</p>
                       </div>
                     </div>
-
-                    <div>
-                      <h4 className="font-semibold mb-2">Descrição</h4>
-                      <p className="text-gray-600">{selectedService.description}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-semibold mb-2">Categoria</h4>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
                         <Badge variant="outline">{selectedService.category}</Badge>
+                        <span className="text-sm text-gray-500">{selectedService.date}</span>
                       </div>
-                      <div>
-                        <h4 className="font-semibold mb-2">Localização</h4>
-                        <p className="text-gray-600 flex items-center">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {selectedService.location}
-                        </p>
-                      </div>
-                    </div>
-
-                    {selectedService.status === "ativo" && (
-                      <div>
-                        <h4 className="font-semibold mb-2">Progresso</h4>
-                        <Progress value={selectedService.progress} className="h-3" />
-                        <p className="text-sm text-gray-600 mt-1">{selectedService.progress}% concluído</p>
-                      </div>
-                    )}
-
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline">
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        Conversar
-                      </Button>
-                      <Button variant="outline">
-                        <Phone className="w-4 h-4 mr-2" />
-                        Ligar
-                      </Button>
-                      {selectedService.status === "ativo" && (
-                        <Button variant="outline">
-                          <X className="w-4 h-4 mr-2" />
-                          Cancelar
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          Reagendar
                         </Button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -865,110 +874,108 @@ export default function ClientDashboard() {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Histórico de Serviços</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {serviceHistory.map((service) => (
-                    <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <Avatar>
+            {/* Histórico de Serviços */}
+            <div className="grid gap-6">
+              {serviceHistory.map((service) => (
+                <Card key={service.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start space-x-4">
+                        <Avatar className="w-12 h-12">
                           <AvatarFallback className="bg-blue-500 text-white">{service.providerAvatar}</AvatarFallback>
                         </Avatar>
-                        <div>
-                          <h4 className="font-semibold text-gray-900">{service.title}</h4>
-                          <p className="text-sm text-gray-600">{service.provider}</p>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{service.title}</h3>
+                          <p className="text-gray-600">{service.provider}</p>
                           <div className="flex items-center mt-1">
                             <Star className="w-4 h-4 text-yellow-400 fill-current" />
                             <span className="text-sm text-gray-600 ml-1">{service.providerRating}</span>
-                            <span className="text-sm text-gray-500 ml-4">{service.date}</span>
+                            <span className="text-gray-400 mx-2">•</span>
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm text-gray-600 ml-1">{service.location}</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900">{service.price}</p>
                         <Badge className={getStatusColor(service.status)}>{service.status}</Badge>
-                        <div className="flex items-center space-x-2 mt-2">
-                          <Button variant="outline" size="sm">
-                            Avaliar
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            Recontratar
-                          </Button>
-                        </div>
+                        <p className="text-lg font-semibold text-gray-900 mt-1">{service.price}</p>
+                        <p className="text-sm text-gray-500">
+                          <Clock className="w-4 h-4 inline mr-1" />
+                          {service.estimatedTime}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+
+                    <p className="text-gray-600 mb-4">{service.description}</p>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline">{service.category}</Badge>
+                        <span className="text-sm text-gray-500">{service.date}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          Chat
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Phone className="w-4 h-4 mr-2" />
+                          Ligar
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="favorites" className="space-y-6">
+            {/* Prestadores Favoritos */}
             <div className="grid gap-6">
               {favoriteProviders.map((provider) => (
                 <Card key={provider.id} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start space-x-4">
-                        <Avatar className="w-16 h-16">
-                          <AvatarFallback className="bg-blue-500 text-white text-lg">{provider.avatar}</AvatarFallback>
+                        <Avatar className="w-12 h-12">
+                          <AvatarFallback className="bg-blue-500 text-white">{provider.avatar}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <div className="flex items-center">
-                            <h3 className="text-lg font-semibold text-gray-900">{provider.name}</h3>
-                            {provider.verified && (
-                              <Badge className="ml-2 bg-green-100 text-green-800">
-                                <i className="fas fa-check-circle mr-1"></i>
-                                Verificado
-                              </Badge>
-                            )}
-                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900">{provider.name}</h3>
                           <p className="text-gray-600">{provider.service}</p>
-                          <div className="flex items-center mt-2">
-                            <div className="flex text-yellow-400">
-                              {[...Array(5)].map((_, i) => (
-                                <Star key={i} className="w-4 h-4 fill-current" />
-                              ))}
-                            </div>
-                            <span className="text-sm text-gray-600 ml-2">
-                              {provider.rating} ({provider.reviews} avaliações)
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-                            <span>
-                              <Clock className="w-4 h-4 inline mr-1" />
-                              Responde em {provider.responseTime}
-                            </span>
-                            <span>
-                              <CheckCircle className="w-4 h-4 inline mr-1" />
-                              {provider.completedJobs} trabalhos
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {provider.specialties.map((specialty, index) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {specialty}
-                              </Badge>
-                            ))}
+                          <div className="flex items-center mt-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm text-gray-600 ml-1">{provider.rating}</span>
+                            <span className="text-gray-400 mx-2">•</span>
+                            <span className="text-sm text-gray-600">{provider.reviews} avaliações</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-900">{provider.price}</p>
-                        <div className="flex items-center space-x-2 mt-4">
-                          <Button variant="outline" size="sm">
-                            <MessageCircle className="w-4 h-4 mr-2" />
-                            Chat
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Phone className="w-4 h-4 mr-2" />
-                            Ligar
-                          </Button>
-                          <Button size="sm">Contratar</Button>
-                        </div>
+                        <p className="text-sm text-gray-500">
+                          <Clock className="w-4 h-4 inline mr-1" />
+                          {provider.responseTime}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-gray-600 mb-4">Especialidades: {provider.specialties.join(", ")}</p>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline">{provider.service}</Badge>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          Chat
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Phone className="w-4 h-4 mr-2" />
+                          Ligar
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -978,333 +985,256 @@ export default function ClientDashboard() {
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Histórico de Pagamentos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {paymentHistory.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <CreditCard className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-gray-900">{payment.service}</h4>
-                          <p className="text-sm text-gray-600">{payment.provider}</p>
-                          <p className="text-xs text-gray-500">ID: {payment.transactionId}</p>
+            {/* Histórico de Pagamentos */}
+            <div className="grid gap-6">
+              {paymentHistory.map((payment) => (
+                <Card key={payment.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start space-x-4">
+                        <Avatar className="w-12 h-12">
+                          <AvatarFallback className="bg-blue-500 text-white">P</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{payment.service}</h3>
+                          <p className="text-gray-600">{payment.provider}</p>
+                          <div className="flex items-center mt-1">
+                            <Badge className={getPaymentStatusColor(payment.status)}>{payment.status}</Badge>
+                            <span className="text-gray-400 mx-2">•</span>
+                            <span className="text-sm text-gray-600">{payment.method}</span>
+                          </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900">{payment.amount}</p>
-                        <Badge className={getPaymentStatusColor(payment.status)}>{payment.status}</Badge>
-                        <p className="text-sm text-gray-500 mt-1">{payment.date}</p>
-                        <p className="text-xs text-gray-500">{payment.method}</p>
+                        <p className="text-2xl font-bold text-gray-900">{payment.amount}</p>
+                        <p className="text-sm text-gray-500">
+                          <Calendar className="w-4 h-4 inline mr-1" />
+                          {payment.date}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+
+                    <p className="text-gray-600 mb-4">ID da Transação: {payment.transactionId}</p>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline">{payment.service}</Badge>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          Chat
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Phone className="w-4 h-4 mr-2" />
+                          Ligar
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="profile" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Informações Principais */}
-              <div className="lg:col-span-2">
+            {/* Perfil do Cliente */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
+                  <CardHeader>
                     <CardTitle>Informações Pessoais</CardTitle>
-                    <Button
-                      variant={isEditingProfile ? "default" : "outline"}
-                      onClick={() => (isEditingProfile ? handleSaveProfile() : setIsEditingProfile(true))}
-                    >
-                      {isEditingProfile ? (
-                        <>
-                          <Save className="w-4 h-4 mr-2" />
-                          Salvar
-                        </>
-                      ) : (
-                        <>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Editar
-                        </>
-                      )}
-                    </Button>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Foto de Perfil */}
-                    <div className="flex items-center space-x-4">
-                      <div className="relative">
-                        <Avatar className="w-20 h-20">
-                          <AvatarImage src={profileImage || undefined} />
-                          <AvatarFallback className="bg-blue-500 text-white text-xl">
-                            {profileData.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        {isEditingProfile && (
-                          <Button
-                            size="sm"
-                            className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                            onClick={() => fileInputRef.current?.click()}
-                          >
-                            <Camera className="w-4 h-4" />
+                  <CardContent>
+                    {isEditingProfile ? (
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="name">Nome</Label>
+                          <Input
+                            id="name"
+                            placeholder="João Silva"
+                            value={profileData.name}
+                            onChange={(e) => handleInputChange("name", e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            placeholder="joao.silva@email.com"
+                            value={profileData.email}
+                            onChange={(e) => handleInputChange("email", e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone">Telefone</Label>
+                          <Input
+                            id="phone"
+                            placeholder="(11) 99999-9999"
+                            value={profileData.phone}
+                            onChange={(e) => handleInputChange("phone", e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="bio">Bio</Label>
+                          <Textarea
+                            id="bio"
+                            placeholder="Descreva um pouco sobre você..."
+                            value={profileData.bio}
+                            onChange={(e) => handleInputChange("bio", e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="location">Localização</Label>
+                          <Input
+                            id="location"
+                            placeholder="São Paulo, SP"
+                            value={profileData.location}
+                            onChange={(e) => handleInputChange("location", e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="birthDate">Data de Nascimento</Label>
+                          <Input
+                            id="birthDate"
+                            type="date"
+                            value={profileData.birthDate}
+                            onChange={(e) => handleInputChange("birthDate", e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="cpf">CPF</Label>
+                          <Input
+                            id="cpf"
+                            placeholder="123.456.789-00"
+                            value={profileData.cpf}
+                            onChange={(e) => handleInputChange("cpf", e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Button onClick={handleSaveProfile} className="bg-blue-600 hover:bg-blue-700">
+                            Salvar
                           </Button>
-                        )}
+                          <Button onClick={() => setIsEditingProfile(false)} variant="outline">
+                            Cancelar
+                          </Button>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-lg font-semibold">{profileData.name}</h3>
-                        <p className="text-gray-500">Cliente ServiceHub</p>
-                        <Badge className="bg-blue-100 text-blue-700 mt-1">Ativo</Badge>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-4">
+                          {profileImage ? (
+                            <AvatarImage src={profileImage || "/placeholder.svg"} alt="Profile Image" />
+                          ) : (
+                            <AvatarFallback className="bg-blue-500 text-white">JS</AvatarFallback>
+                          )}
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">{profileData.name}</h3>
+                            <p className="text-gray-600">{profileData.email}</p>
+                            <p className="text-gray-600">{profileData.phone}</p>
+                            <p className="text-gray-600">{profileData.location}</p>
+                            <p className="text-gray-600">Data de Nascimento: {profileData.birthDate}</p>
+                            <p className="text-gray-600">CPF: {profileData.cpf}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <Button onClick={() => setIsEditingProfile(true)} className="bg-blue-600 hover:bg-blue-700">
+                            Editar Perfil
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-
-                    {/* Campos do Formulário */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="name">Nome Completo</Label>
-                        <Input
-                          id="name"
-                          value={profileData.name}
-                          onChange={(e) => handleInputChange("name", e.target.value)}
-                          disabled={!isEditingProfile}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">E-mail</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={profileData.email}
-                          onChange={(e) => handleInputChange("email", e.target.value)}
-                          disabled={!isEditingProfile}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="phone">Telefone</Label>
-                        <Input
-                          id="phone"
-                          value={profileData.phone}
-                          onChange={(e) => handleInputChange("phone", e.target.value)}
-                          disabled={!isEditingProfile}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="location">Localização</Label>
-                        <Input
-                          id="location"
-                          value={profileData.location}
-                          onChange={(e) => handleInputChange("location", e.target.value)}
-                          disabled={!isEditingProfile}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="birthDate">Data de Nascimento</Label>
-                        <Input
-                          id="birthDate"
-                          type="date"
-                          value={profileData.birthDate}
-                          onChange={(e) => handleInputChange("birthDate", e.target.value)}
-                          disabled={!isEditingProfile}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="cpf">CPF</Label>
-                        <Input
-                          id="cpf"
-                          value={profileData.cpf}
-                          onChange={(e) => handleInputChange("cpf", e.target.value)}
-                          disabled={!isEditingProfile}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="bio">Sobre Você</Label>
-                      <Textarea
-                        id="bio"
-                        value={profileData.bio}
-                        onChange={(e) => handleInputChange("bio", e.target.value)}
-                        disabled={!isEditingProfile}
-                        rows={4}
-                      />
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
-
-                {/* Configurações de Notificações */}
-                <Card className="mt-6">
+              </div>
+              <div>
+                <Card>
                   <CardHeader>
                     <CardTitle>Preferências de Notificação</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="email-notifications">Notificações por E-mail</Label>
-                        <p className="text-sm text-gray-500">Receba atualizações importantes por e-mail</p>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={profileData.preferences.emailNotifications}
+                            onCheckedChange={(checked) => handlePreferenceChange("emailNotifications", checked)}
+                          />
+                          <span>Email</span>
+                        </div>
                       </div>
-                      <Switch
-                        id="email-notifications"
-                        checked={profileData.preferences.emailNotifications}
-                        onCheckedChange={(checked) => handlePreferenceChange("emailNotifications", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="sms-notifications">Notificações por SMS</Label>
-                        <p className="text-sm text-gray-500">Receba alertas urgentes por SMS</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={profileData.preferences.smsNotifications}
+                            onCheckedChange={(checked) => handlePreferenceChange("smsNotifications", checked)}
+                          />
+                          <span>SMS</span>
+                        </div>
                       </div>
-                      <Switch
-                        id="sms-notifications"
-                        checked={profileData.preferences.smsNotifications}
-                        onCheckedChange={(checked) => handlePreferenceChange("smsNotifications", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="push-notifications">Notificações Push</Label>
-                        <p className="text-sm text-gray-500">Receba notificações no navegador</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={profileData.preferences.pushNotifications}
+                            onCheckedChange={(checked) => handlePreferenceChange("pushNotifications", checked)}
+                          />
+                          <span>Push</span>
+                        </div>
                       </div>
-                      <Switch
-                        id="push-notifications"
-                        checked={profileData.preferences.pushNotifications}
-                        onCheckedChange={(checked) => handlePreferenceChange("pushNotifications", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="marketing-emails">E-mails de Marketing</Label>
-                        <p className="text-sm text-gray-500">Receba ofertas e novidades</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={profileData.preferences.marketingEmails}
+                            onCheckedChange={(checked) => handlePreferenceChange("marketingEmails", checked)}
+                          />
+                          <span>Emails de Marketing</span>
+                        </div>
                       </div>
-                      <Switch
-                        id="marketing-emails"
-                        checked={profileData.preferences.marketingEmails}
-                        onCheckedChange={(checked) => handlePreferenceChange("marketingEmails", checked)}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Configurações de Privacidade */}
-                <Card className="mt-6">
-                  <CardHeader>
-                    <CardTitle>Configurações de Privacidade</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="show-phone">Mostrar Telefone</Label>
-                        <p className="text-sm text-gray-500">Permitir que prestadores vejam seu telefone</p>
-                      </div>
-                      <Switch
-                        id="show-phone"
-                        checked={profileData.privacy.showPhone}
-                        onCheckedChange={(checked) => handlePrivacyChange("showPhone", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="show-email">Mostrar E-mail</Label>
-                        <p className="text-sm text-gray-500">Permitir que prestadores vejam seu e-mail</p>
-                      </div>
-                      <Switch
-                        id="show-email"
-                        checked={profileData.privacy.showEmail}
-                        onCheckedChange={(checked) => handlePrivacyChange("showEmail", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="show-location">Mostrar Localização</Label>
-                        <p className="text-sm text-gray-500">Permitir que prestadores vejam sua localização</p>
-                      </div>
-                      <Switch
-                        id="show-location"
-                        checked={profileData.privacy.showLocation}
-                        onCheckedChange={(checked) => handlePrivacyChange("showLocation", checked)}
-                      />
                     </div>
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Estatísticas do Perfil */}
-              <div className="space-y-6">
+              <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Estatísticas do Perfil</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Serviços Contratados</span>
-                      <span className="font-semibold">{stats.totalServices}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Avaliação Média Dada</span>
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                        <span className="font-semibold">{stats.averageRating}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Total Investido</span>
-                      <span className="font-semibold">R$ {stats.totalSpent.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Prestadores Favoritos</span>
-                      <span className="font-semibold text-red-600">{stats.favoriteProviders}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Segurança da Conta</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Button variant="outline" className="w-full justify-start bg-transparent">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Alterar Senha
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start bg-transparent">
-                      <i className="fas fa-shield-alt w-4 h-4 mr-2"></i>
-                      Verificação em 2 Etapas
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start bg-transparent">
-                      <i className="fas fa-download w-4 h-4 mr-2"></i>
-                      Baixar Meus Dados
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Conta Premium</CardTitle>
+                    <CardTitle>Configurações de Privacidade</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i className="fas fa-crown text-white text-2xl"></i>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={profileData.privacy.showPhone}
+                            onCheckedChange={(checked) => handlePrivacyChange("showPhone", checked)}
+                          />
+                          <span>Mostrar Telefone</span>
+                        </div>
                       </div>
-                      <h3 className="font-semibold mb-2">Upgrade para Premium</h3>
-                      <p className="text-sm text-gray-600 mb-4">
-                        Tenha acesso a recursos exclusivos e prioridade no atendimento
-                      </p>
-                      <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
-                        Assinar Premium
-                      </Button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={profileData.privacy.showEmail}
+                            onCheckedChange={(checked) => handlePrivacyChange("showEmail", checked)}
+                          />
+                          <span>Mostrar Email</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={profileData.privacy.showLocation}
+                            onCheckedChange={(checked) => handlePrivacyChange("showLocation", checked)}
+                          />
+                          <span>Mostrar Localização</span>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

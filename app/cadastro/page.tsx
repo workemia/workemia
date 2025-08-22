@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -12,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
+import { createClient } from "@/lib/supabase/client"
 
 export default function CadastroPage() {
   const router = useRouter()
@@ -41,17 +41,62 @@ export default function CadastroPage() {
       return
     }
 
+    if (formData.password.length < 6) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!formData.tipo) {
+      toast({
+        title: "Tipo de conta obrigatório",
+        description: "Por favor, selecione o tipo de conta.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
-    // Simular cadastro
-    setTimeout(() => {
-      setIsLoading(false)
-      toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Bem-vindo ao ServiceHub.",
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard/${formData.tipo}`,
+          data: {
+            name: formData.nome,
+            phone: formData.telefone,
+            user_type: formData.tipo,
+          },
+        },
       })
-      router.push("/")
-    }, 1000)
+
+      if (error) {
+        throw error
+      }
+
+      if (data.user) {
+        toast({
+          title: "Cadastro realizado com sucesso!",
+          description: "Verifique seu e-mail para confirmar sua conta.",
+        })
+        router.push("/login")
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro no cadastro",
+        description: error.message || "Erro ao criar conta. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

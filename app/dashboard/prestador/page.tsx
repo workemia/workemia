@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import {
   Calendar,
   Clock,
@@ -20,24 +22,18 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FullCalendar } from "@/components/ui/full-calendar"
-import { useCalendarEvents } from "@/hooks/use-calendar-events"
-import { useNotifications } from "@/hooks/use-notifications"
-import { supabase } from "@/lib/supabase"
-import type { Database } from "@/lib/database.types"
 
-type Service = Database["public"]["Tables"]["services"]["Row"] & {
-  users: Database["public"]["Tables"]["users"]["Row"]
+type Service = any & {
+  users: any
 }
 
-type Review = Database["public"]["Tables"]["reviews"]["Row"] & {
-  users: Database["public"]["Tables"]["users"]["Row"]
+type Review = any & {
+  users: any
 }
-
-// Mock user ID - em produção, isso viria da autenticação
-const MOCK_PROVIDER_ID = "provider-id-1"
 
 export default function DashboardPrestador() {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
   const [services, setServices] = useState<Service[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [stats, setStats] = useState({
@@ -47,62 +43,86 @@ export default function DashboardPrestador() {
     responseTime: "< 2h",
   })
   const [loading, setLoading] = useState(true)
-
-  const { events, loading: eventsLoading } = useCalendarEvents(MOCK_PROVIDER_ID)
-  const { notifications, unreadCount } = useNotifications(MOCK_PROVIDER_ID)
+  const [events, setEvents] = useState([])
+  const [notifications, setNotifications] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    async function fetchDashboardData() {
-      try {
-        setLoading(true)
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-        // Buscar serviços do prestador
-        const { data: servicesData } = await supabase
-          .from("services")
-          .select(`
-            *,
-            users!services_client_id_fkey (*)
-          `)
-          .eq("provider_id", MOCK_PROVIDER_ID)
-          .order("created_at", { ascending: false })
-
-        if (servicesData) setServices(servicesData)
-
-        // Buscar avaliações
-        const { data: reviewsData } = await supabase
-          .from("reviews")
-          .select(`
-            *,
-            users!reviews_client_id_fkey (*)
-          `)
-          .eq("provider_id", MOCK_PROVIDER_ID)
-          .order("created_at", { ascending: false })
-          .limit(5)
-
-        if (reviewsData) setReviews(reviewsData)
-
-        // Calcular estatísticas
-        const completedServices = servicesData?.filter((s) => s.status === "completed") || []
-        const totalEarnings = completedServices.reduce((sum, service) => sum + (service.final_price || 0), 0)
-        const averageRating = reviewsData?.length
-          ? reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length
-          : 0
-
-        setStats({
-          totalEarnings,
-          completedJobs: completedServices.length,
-          averageRating,
-          responseTime: "< 2h",
-        })
-      } catch (error) {
-        console.error("Erro ao carregar dados do dashboard:", error)
-      } finally {
-        setLoading(false)
+      if (!user) {
+        router.push("/login")
+        return
       }
+
+      setUser(user)
+      await fetchDashboardData(user.id)
     }
 
-    fetchDashboardData()
-  }, [])
+    checkAuth()
+
+    const supabase = createClient()
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        router.push("/login")
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [router])
+
+  async function fetchDashboardData(userId: string) {
+    try {
+      setLoading(true)
+      const supabase = createClient()
+
+      const { data: servicesData } = await supabase
+        .from("services")
+        .select(`
+          *,
+          users!services_client_id_fkey (*)
+        `)
+        .eq("provider_id", userId)
+        .order("created_at", { ascending: false })
+
+      if (servicesData) setServices(servicesData)
+
+      const { data: reviewsData } = await supabase
+        .from("reviews")
+        .select(`
+          *,
+          users!reviews_client_id_fkey (*)
+        `)
+        .eq("provider_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(5)
+
+      if (reviewsData) setReviews(reviewsData)
+
+      const completedServices = servicesData?.filter((s) => s.status === "completed") || []
+      const totalEarnings = completedServices.reduce((sum, service) => sum + (service.final_price || 0), 0)
+      const averageRating = reviewsData?.length
+        ? reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length
+        : 0
+
+      setStats({
+        totalEarnings,
+        completedJobs: completedServices.length,
+        averageRating,
+        responseTime: "< 2h",
+      })
+    } catch (error) {
+      console.error("Erro ao carregar dados do dashboard:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -157,18 +177,10 @@ export default function DashboardPrestador() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
     )
@@ -177,7 +189,6 @@ export default function DashboardPrestador() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard do Prestador</h1>
@@ -203,7 +214,6 @@ export default function DashboardPrestador() {
           </div>
         </div>
 
-        {/* Métricas principais */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
@@ -267,7 +277,6 @@ export default function DashboardPrestador() {
           </Card>
         </div>
 
-        {/* Conteúdo principal */}
         <Tabs defaultValue="services" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="services">Serviços</TabsTrigger>
@@ -360,13 +369,13 @@ export default function DashboardPrestador() {
                 <CardDescription>Visualize e gerencie seus compromissos</CardDescription>
               </CardHeader>
               <CardContent>
-                {eventsLoading ? (
-                  <div className="h-96 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="h-96 flex items-center justify-center">
+                  <div className="text-center">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Agenda em desenvolvimento</h3>
+                    <p className="text-gray-600">A funcionalidade de agenda será implementada em breve.</p>
                   </div>
-                ) : (
-                  <FullCalendar events={events} />
-                )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
