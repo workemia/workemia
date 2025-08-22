@@ -1,51 +1,203 @@
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import SignUpForm from "@/components/sign-up-form"
+"use client"
 
-export default async function CadastroPage() {
-  // If Supabase is not configured, show setup message directly
-  if (!isSupabaseConfigured) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-xl p-8 text-center">
-            <h1 className="text-2xl font-bold mb-4 text-gray-900">Connect Supabase to get started</h1>
-          </div>
-        </div>
-      </div>
-    )
+import type React from "react"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "@/hooks/use-toast"
+
+export default function CadastroPage() {
+  const router = useRouter()
+  const [formData, setFormData] = useState({
+    nome: "",
+    email: "",
+    telefone: "",
+    password: "",
+    confirmPassword: "",
+    tipo: "",
+  })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  // Check if user is already logged in
-  const supabase = await createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  // If user is logged in, redirect to appropriate dashboard
-  if (session) {
-    const { data: userData } = await supabase
-      .from("users")
-      .select("user_type")
-      .eq("firebase_uid", session.user.id)
-      .single()
-
-    if (userData?.user_type === "prestador") {
-      redirect("/dashboard/prestador")
-    } else {
-      redirect("/dashboard/cliente")
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem.",
+        variant: "destructive",
+      })
+      return
     }
+
+    setIsLoading(true)
+
+    // Simular cadastro
+    setTimeout(() => {
+      setIsLoading(false)
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        description: "Bem-vindo ao ServiceHub.",
+      })
+      router.push("/")
+    }, 1000)
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">ServiceHub</h1>
-            <p className="text-gray-600">Crie sua conta</p>
-          </div>
-          <SignUpForm />
+        <div className="text-center mb-8">
+          <Link href="/" className="text-3xl font-bold text-white">
+            ServiceHub
+          </Link>
+          <p className="text-blue-100 mt-2">Crie sua conta</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Cadastrar-se</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="nome">Nome completo</Label>
+                <Input
+                  id="nome"
+                  placeholder="Seu nome completo"
+                  value={formData.nome}
+                  onChange={(e) => handleInputChange("nome", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  placeholder="(11) 99999-9999"
+                  value={formData.telefone}
+                  onChange={(e) => handleInputChange("telefone", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tipo">Tipo de conta</Label>
+                <Select value={formData.tipo} onValueChange={(value) => handleInputChange("tipo", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de conta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cliente">Cliente</SelectItem>
+                    <SelectItem value="prestador">Prestador de Serviços</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Sua senha"
+                  value={formData.password}
+                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="confirmPassword">Confirmar senha</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirme sua senha"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="text-xs text-gray-600">
+                Ao criar uma conta, você concorda com nossos{" "}
+                <Link href="/termos-uso" className="text-blue-600 hover:underline">
+                  Termos de Uso
+                </Link>{" "}
+                e{" "}
+                <Link href="/politica-privacidade" className="text-blue-600 hover:underline">
+                  Política de Privacidade
+                </Link>
+                .
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin mr-2"></i>
+                    Criando conta...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-user-plus mr-2"></i>
+                    Criar conta
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6">
+              <Separator className="my-4" />
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  Já tem uma conta?{" "}
+                  <Link href="/login" className="text-blue-600 hover:underline font-medium">
+                    Faça login aqui
+                  </Link>
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <Button variant="outline" className="w-full bg-transparent" type="button">
+                <i className="fab fa-google mr-2"></i>
+                Continuar com Google
+              </Button>
+              <Button variant="outline" className="w-full bg-transparent" type="button">
+                <i className="fab fa-facebook mr-2"></i>
+                Continuar com Facebook
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="text-center mt-6">
+          <Link href="/" className="text-blue-100 hover:text-white text-sm">
+            <i className="fas fa-arrow-left mr-2"></i>
+            Voltar ao início
+          </Link>
         </div>
       </div>
     </div>
