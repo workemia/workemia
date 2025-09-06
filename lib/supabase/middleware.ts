@@ -42,9 +42,9 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/cadastro") &&
     !request.nextUrl.pathname.startsWith("/auth") &&
-    !request.nextUrl.pathname.startsWith("/") &&
     !request.nextUrl.pathname.startsWith("/como-funciona") &&
-    !request.nextUrl.pathname.startsWith("/servicos")
+    !request.nextUrl.pathname.startsWith("/servicos") &&
+    request.nextUrl.pathname !== "/"
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()

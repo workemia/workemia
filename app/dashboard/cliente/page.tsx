@@ -83,14 +83,30 @@ export default function ClientDashboard() {
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [stats, setStats] = useState({
+    totalServices: 0,
+    activeServices: 0,
+    totalSpent: 0,
+    averageRating: 0,
+    monthlyGrowth: 0,
+    completedServices: 0,
+    favoriteProviders: 0,
+    pendingPayments: 0,
+  })
+
+  const [activeServices, setActiveServices] = useState<Service[]>([])
+  const [serviceHistory, setServiceHistory] = useState<Service[]>([])
+  const [favoriteProviders, setFavoriteProviders] = useState<Provider[]>([])
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([])
+
   const [profileData, setProfileData] = useState({
-    name: "João Silva",
-    email: "joao.silva@email.com",
-    phone: "(11) 99999-9999",
-    bio: "Cliente ativo da plataforma ServiceHub, sempre em busca de serviços de qualidade.",
-    location: "São Paulo, SP",
-    birthDate: "1990-05-15",
-    cpf: "123.456.789-00",
+    name: "",
+    email: "",
+    phone: "",
+    bio: "",
+    location: "",
+    birthDate: "",
+    cpf: "",
     preferences: {
       emailNotifications: true,
       smsNotifications: false,
@@ -114,6 +130,7 @@ export default function ClientDashboard() {
   })
 
   // Dados simulados
+  /*
   const stats = {
     totalServices: 24,
     activeServices: 3,
@@ -280,6 +297,7 @@ export default function ClientDashboard() {
       transactionId: "TXN123458",
     },
   ]
+  */
 
   const filteredActiveServices = activeServices.filter((service) => {
     const matchesSearch =
@@ -397,6 +415,8 @@ export default function ClientDashboard() {
       }
 
       setUser(user)
+
+      await loadUserData(user.id)
       setLoading(false)
     }
 
@@ -414,6 +434,75 @@ export default function ClientDashboard() {
 
     return () => subscription.unsubscribe()
   }, [router])
+
+  const loadUserData = async (userId: string) => {
+    const supabase = createClient()
+
+    try {
+      // Load user profile
+      const { data: userProfile } = await supabase.from("users").select("*").eq("id", userId).single()
+
+      if (userProfile) {
+        setProfileData((prev) => ({
+          ...prev,
+          name: userProfile.display_name || userProfile.email,
+          email: userProfile.email,
+          phone: userProfile.phone || "",
+          location: userProfile.location || "",
+        }))
+      }
+
+      // Load user services
+      const { data: services } = await supabase
+        .from("services")
+        .select(`
+          *,
+          service_requests!inner(
+            id,
+            status,
+            created_at,
+            users!service_requests_client_id_fkey(display_name, email)
+          )
+        `)
+        .eq("service_requests.client_id", userId)
+
+      if (services) {
+        const activeServicesData = services
+          .filter((service) => ["pending", "in_progress"].includes(service.service_requests[0]?.status))
+          .map((service) => ({
+            id: service.id,
+            title: service.title,
+            provider: service.service_requests[0]?.users?.display_name || "Prestador",
+            status: service.service_requests[0]?.status === "in_progress" ? "ativo" : "pendente",
+            progress: service.service_requests[0]?.status === "in_progress" ? 50 : 0,
+            price: `R$ ${service.price}`,
+            date: new Date(service.service_requests[0]?.created_at).toLocaleDateString("pt-BR"),
+            description: service.description,
+            category: service.category,
+            location: service.location,
+            providerAvatar:
+              service.service_requests[0]?.users?.display_name
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("") || "P",
+            providerRating: 4.5,
+            estimatedTime: "2-4 horas",
+          }))
+
+        setActiveServices(activeServicesData)
+
+        // Update stats
+        setStats((prev) => ({
+          ...prev,
+          totalServices: services.length,
+          activeServices: activeServicesData.length,
+          completedServices: services.filter((s) => s.service_requests[0]?.status === "completed").length,
+        }))
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error)
+    }
+  }
 
   if (loading) {
     return (
