@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useAuth } from "@/hooks/use-auth"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -17,22 +18,35 @@ import { Switch } from "@/components/ui/switch"
 import { toast } from "@/hooks/use-toast"
 
 export default function ProfilePage() {
+  const { user, loading } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [profileData, setProfileData] = useState({
-    name: "João Santos",
-    email: "joao.santos@email.com",
-    phone: "(11) 99999-9999",
-    bio: "Profissional experiente em serviços gerais com mais de 5 anos de experiência. Especializado em reparos domésticos, pintura e manutenção.",
-    location: "São Paulo, SP",
-    birthDate: "1985-03-15",
-    cpf: "123.456.789-00",
-    services: ["Reparos Gerais", "Pintura", "Elétrica"],
-    hourlyRate: "120",
-    availability: "Segunda a Sexta, 8h às 18h",
+    name: "",
+    email: "",
+    phone: "",
+    bio: "",
+    location: "",
+    birthDate: "",
+    cpf: "",
+    services: [] as string[],
+    hourlyRate: "",
+    availability: "",
   })
+
+  // Carrega dados do usuário autenticado
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+      }))
+    }
+  }, [user])
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -111,6 +125,20 @@ export default function ProfilePage() {
     completionRate: "98%",
   }
 
+  // Verifica se é prestador
+  const isProvider = user?.type === "provider" || user?.type === "prestador"
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Carregando perfil...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -122,15 +150,17 @@ export default function ProfilePage() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+          <TabsList className={`grid w-full ${isProvider ? 'grid-cols-2 lg:grid-cols-5' : 'grid-cols-2 lg:grid-cols-3'}`}>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <i className="fas fa-user"></i>
               <span className="hidden sm:inline">Perfil</span>
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="flex items-center gap-2">
-              <i className="fas fa-star"></i>
-              <span className="hidden sm:inline">Avaliações</span>
-            </TabsTrigger>
+            {isProvider && (
+              <TabsTrigger value="reviews" className="flex items-center gap-2">
+                <i className="fas fa-star"></i>
+                <span className="hidden sm:inline">Avaliações</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <i className="fas fa-cog"></i>
               <span className="hidden sm:inline">Configurações</span>
@@ -139,10 +169,12 @@ export default function ProfilePage() {
               <i className="fas fa-shield-alt"></i>
               <span className="hidden sm:inline">Segurança</span>
             </TabsTrigger>
-            <TabsTrigger value="billing" className="flex items-center gap-2">
-              <i className="fas fa-credit-card"></i>
-              <span className="hidden sm:inline">Pagamentos</span>
-            </TabsTrigger>
+            {isProvider && (
+              <TabsTrigger value="billing" className="flex items-center gap-2">
+                <i className="fas fa-credit-card"></i>
+                <span className="hidden sm:inline">Pagamentos</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
