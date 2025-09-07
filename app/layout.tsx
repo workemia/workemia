@@ -11,9 +11,13 @@ import { Analytics } from "@vercel/analytics/next"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
- title: "ServiceHub - Conectando você aos melhores prestadores de serviços",
+ title: "Service Workee - Conectando você aos melhores prestadores de serviços",
  description: "Plataforma que conecta clientes a prestadores de serviços qualificados",
-   generator: 'v0.app'
+   generator: 'Vinicius & Victor',
+  applicationName: 'Service Workee',
+  referrer: 'origin-when-cross-origin',
+  keywords: ['serviços', 'prestadores de serviços', 'clientes', 'qualificados', 'plataforma', 'conexão', 'contratação', 'facilidade'],
+  authors: [{ name: 'Vinicius & Victor' }],
 }
 
 export default function RootLayout({
@@ -22,7 +26,7 @@ export default function RootLayout({
  children: React.ReactNode
 }) {
  return (
-   <html lang="pt-BR">
+   <html lang="pt-BR" suppressHydrationWarning>
      <head>
        <link
          rel="stylesheet"
