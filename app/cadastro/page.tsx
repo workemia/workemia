@@ -63,32 +63,45 @@ export default function CadastroPage() {
 
     try {
       const supabase = createClient()
+      
+      // Cadastro usando apenas os metadados do Supabase Auth - SEM tabela customizada
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard/${formData.tipo}`,
           data: {
-            name: formData.nome,
+            full_name: formData.nome,
             phone: formData.telefone,
             user_type: formData.tipo,
-          },
-        },
+            display_name: formData.nome,
+          }
+        }
       })
 
       if (error) {
+        // Tratamento específico de erros
+        if (error.message.includes('User already registered')) {
+          throw new Error('Este e-mail já está cadastrado. Tente fazer login.')
+        }
+        if (error.message.includes('Database error')) {
+          throw new Error('Erro interno do servidor. Tente novamente em alguns minutos.')
+        }
         throw error
       }
 
       if (data.user) {
         toast({
           title: "Cadastro realizado com sucesso!",
-          description: "Verifique seu e-mail para confirmar sua conta.",
+          description: "Você pode fazer login agora.",
         })
-        router.push("/login")
+
+        // Redireciona para login após sucesso
+        setTimeout(() => {
+          router.push("/login")
+        }, 2000)
       }
     } catch (error: any) {
+      console.error('Erro no cadastro:', error)
       toast({
         title: "Erro no cadastro",
         description: error.message || "Erro ao criar conta. Tente novamente.",
@@ -156,8 +169,8 @@ export default function CadastroPage() {
                     <SelectValue placeholder="Selecione o tipo de conta" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cliente">Cliente</SelectItem>
-                    <SelectItem value="prestador">Prestador de Serviços</SelectItem>
+                    <SelectItem value="client">Cliente</SelectItem>
+                    <SelectItem value="provider">Prestador de Serviços</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
