@@ -409,7 +409,7 @@ export function NearbyServicesSection() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-start space-x-3">
                           <Avatar className="w-10 h-10">
-                            <AvatarImage src={`/placeholder.svg?height=40&width=40`} />
+                            <AvatarImage src={provider.avatar} />
                             <AvatarFallback className="bg-blue-500 text-white text-sm">
                               {provider.name
                                 .split(" ")
