@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
 
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -38,6 +39,7 @@ import {
   CheckCircle,
   Bell,
 } from "lucide-react"
+import { User } from "@supabase/supabase-js"
 
 interface Service {
   id: string
@@ -71,17 +73,13 @@ interface Provider {
 
 export default function ClientDashboard() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, loading } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [showNewServiceModal, setShowNewServiceModal] = useState(false)
   const [notifications, setNotifications] = useState(3)
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [profileImage, setProfileImage] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [stats, setStats] = useState({
     totalServices: 0,
@@ -99,26 +97,6 @@ export default function ClientDashboard() {
   const [favoriteProviders, setFavoriteProviders] = useState<Provider[]>([])
   const [paymentHistory, setPaymentHistory] = useState<any[]>([])
 
-  const [profileData, setProfileData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    bio: "",
-    location: "",
-    birthDate: "",
-    cpf: "",
-    preferences: {
-      emailNotifications: true,
-      smsNotifications: false,
-      pushNotifications: true,
-      marketingEmails: false,
-    },
-    privacy: {
-      showPhone: true,
-      showEmail: false,
-      showLocation: true,
-    },
-  })
 
   const [newService, setNewService] = useState({
     title: "",
@@ -129,176 +107,7 @@ export default function ClientDashboard() {
     urgency: "normal",
   })
 
-  // Dados simulados
-  /*
-  const stats = {
-    totalServices: 24,
-    activeServices: 3,
-    totalSpent: 2850,
-    averageRating: 4.8,
-    monthlyGrowth: 12,
-    completedServices: 21,
-    favoriteProviders: 8,
-    pendingPayments: 1,
-  }
-
-  const activeServices: Service[] = [
-    {
-      id: "1",
-      title: "Limpeza Residencial Completa",
-      provider: "Maria Silva",
-      status: "ativo",
-      progress: 75,
-      price: "R$ 120",
-      date: "2024-01-15",
-      description: "Limpeza completa de apartamento 2 quartos, incluindo banheiros, cozinha e área de serviço",
-      category: "Limpeza",
-      location: "São Paulo, SP",
-      providerAvatar: "MS",
-      providerRating: 4.9,
-      estimatedTime: "4 horas",
-    },
-    {
-      id: "2",
-      title: "Reparo Elétrico",
-      provider: "João Santos",
-      status: "pendente",
-      progress: 0,
-      price: "R$ 200",
-      date: "2024-01-16",
-      description: "Instalação de novos pontos de luz na sala e quarto",
-      category: "Elétrica",
-      location: "São Paulo, SP",
-      providerAvatar: "JS",
-      providerRating: 4.7,
-      estimatedTime: "3 horas",
-    },
-    {
-      id: "3",
-      title: "Aula de Matemática",
-      provider: "Pedro Oliveira",
-      status: "ativo",
-      progress: 50,
-      price: "R$ 80",
-      date: "2024-01-14",
-      description: "Aulas particulares de matemática para ensino médio",
-      category: "Educação",
-      location: "Online",
-      providerAvatar: "PO",
-      providerRating: 4.9,
-      estimatedTime: "2 horas",
-    },
-  ]
-
-  const serviceHistory: Service[] = [
-    {
-      id: "4",
-      title: "Pintura de Parede",
-      provider: "Carlos Mendes",
-      status: "concluido",
-      progress: 100,
-      price: "R$ 350",
-      date: "2024-01-10",
-      description: "Pintura completa da sala de estar",
-      category: "Pintura",
-      location: "São Paulo, SP",
-      providerAvatar: "CM",
-      providerRating: 5.0,
-      estimatedTime: "6 horas",
-    },
-    {
-      id: "5",
-      title: "Manicure e Pedicure",
-      provider: "Ana Costa",
-      status: "concluido",
-      progress: 100,
-      price: "R$ 60",
-      date: "2024-01-08",
-      description: "Serviço completo de manicure e pedicure",
-      category: "Beleza",
-      location: "São Paulo, SP",
-      providerAvatar: "AC",
-      providerRating: 4.8,
-      estimatedTime: "2 horas",
-    },
-  ]
-
-  const favoriteProviders: Provider[] = [
-    {
-      id: "1",
-      name: "Maria Silva",
-      service: "Limpeza Residencial",
-      rating: 4.9,
-      reviews: 127,
-      price: "R$ 80/h",
-      avatar: "MS",
-      verified: true,
-      responseTime: "< 1h",
-      completedJobs: 156,
-      specialties: ["Limpeza Pesada", "Organização", "Limpeza Pós-Obra"],
-    },
-    {
-      id: "2",
-      name: "João Santos",
-      service: "Reparos Gerais",
-      rating: 4.7,
-      reviews: 89,
-      price: "R$ 120/h",
-      avatar: "JS",
-      verified: true,
-      responseTime: "< 2h",
-      completedJobs: 94,
-      specialties: ["Elétrica", "Hidráulica", "Marcenaria"],
-    },
-    {
-      id: "3",
-      name: "Pedro Oliveira",
-      service: "Professor Particular",
-      rating: 4.9,
-      reviews: 78,
-      price: "R$ 50/h",
-      avatar: "PO",
-      verified: true,
-      responseTime: "< 30min",
-      completedJobs: 203,
-      specialties: ["Matemática", "Física", "Química"],
-    },
-  ]
-
-  const paymentHistory = [
-    {
-      id: "1",
-      service: "Limpeza Residencial",
-      provider: "Maria Silva",
-      amount: "R$ 120,00",
-      date: "15/01/2024",
-      status: "pago",
-      method: "Cartão de Crédito",
-      transactionId: "TXN123456",
-    },
-    {
-      id: "2",
-      service: "Pintura de Parede",
-      provider: "Carlos Mendes",
-      amount: "R$ 350,00",
-      date: "10/01/2024",
-      status: "pago",
-      method: "PIX",
-      transactionId: "TXN123457",
-    },
-    {
-      id: "3",
-      service: "Reparo Elétrico",
-      provider: "João Santos",
-      amount: "R$ 200,00",
-      date: "16/01/2024",
-      status: "pendente",
-      method: "Cartão de Débito",
-      transactionId: "TXN123458",
-    },
-  ]
-  */
-
+  
   const filteredActiveServices = activeServices.filter((service) => {
     const matchesSearch =
       service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -324,55 +133,6 @@ export default function ClientDashboard() {
     })
   }
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setProfileImage(e.target?.result as string)
-        toast({
-          title: "Foto atualizada",
-          description: "Sua foto de perfil foi atualizada com sucesso!",
-        })
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const handleSaveProfile = () => {
-    setIsEditingProfile(false)
-    toast({
-      title: "Perfil atualizado",
-      description: "Suas informações foram salvas com sucesso!",
-    })
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setProfileData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-  }
-
-  const handlePreferenceChange = (field: string, value: boolean) => {
-    setProfileData((prev) => ({
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        [field]: value,
-      },
-    }))
-  }
-
-  const handlePrivacyChange = (field: string, value: boolean) => {
-    setProfileData((prev) => ({
-      ...prev,
-      privacy: {
-        ...prev.privacy,
-        [field]: value,
-      },
-    }))
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -402,38 +162,19 @@ export default function ClientDashboard() {
     }
   }
 
+  // Redirecciona para login se não estiver autenticado
   useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push("/login")
-        return
-      }
-
-      setUser(user)
-
-      await loadUserData(user.id)
-      setLoading(false)
+    if (!loading && !user) {
+      router.push("/login")
     }
+  }, [user, loading, router])
 
-    checkAuth()
-
-    // Listen for auth changes
-    const supabase = createClient()
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || !session) {
-        router.push("/login")
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [router])
+  // Carrega dados do usuário quando autenticado
+  useEffect(() => {
+    if (user?.id) {
+      loadUserData(user.id)
+    }
+  }, [user?.id])
 
   const loadUserData = async (userId: string) => {
     const supabase = createClient()
@@ -469,25 +210,53 @@ export default function ClientDashboard() {
       if (services) {
         const activeServicesData = services
           .filter((service) => ["pending", "in_progress"].includes(service.service_requests[0]?.status))
-          .map((service) => ({
-            id: service.id,
-            title: service.title,
-            provider: service.service_requests[0]?.users?.display_name || "Prestador",
-            status: service.service_requests[0]?.status === "in_progress" ? "ativo" : "pendente",
-            progress: service.service_requests[0]?.status === "in_progress" ? 50 : 0,
-            price: `R$ ${service.price}`,
-            date: new Date(service.service_requests[0]?.created_at).toLocaleDateString("pt-BR"),
-            description: service.description,
-            category: service.category,
-            location: service.location,
-            providerAvatar:
-              service.service_requests[0]?.users?.display_name
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("") || "P",
-            providerRating: 4.5,
-            estimatedTime: "2-4 horas",
-          }))
+          .map((service) => {
+            let status: "ativo" | "pendente" | "concluido" | "cancelado" = "pendente";
+            if (service.service_requests[0]?.status === "in_progress") status = "ativo";
+            else if (service.service_requests[0]?.status === "completed") status = "concluido";
+            else if (service.service_requests[0]?.status === "cancelled") status = "cancelado";
+            interface ServiceRequestUser {
+              display_name?: string
+              email?: string
+            }
+
+            interface ServiceRequest {
+              id: string
+              status: string
+              created_at: string
+              users?: ServiceRequestUser
+            }
+
+            interface SupabaseService {
+              id: string
+              title: string
+              price: string
+              description: string
+              category: string
+              location: string
+              service_requests: ServiceRequest[]
+            }
+
+            return {
+              id: (service as SupabaseService).id,
+              title: (service as SupabaseService).title,
+              provider: (service as SupabaseService).service_requests[0]?.users?.display_name || "Prestador",
+              status,
+              progress: status === "ativo" ? 50 : 0,
+              price: `R$ ${(service as SupabaseService).price}`,
+              date: new Date((service as SupabaseService).service_requests[0]?.created_at).toLocaleDateString("pt-BR"),
+              description: (service as SupabaseService).description,
+              category: (service as SupabaseService).category,
+              location: (service as SupabaseService).location,
+              providerAvatar:
+                (service as SupabaseService).service_requests[0]?.users?.display_name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .join("") || "P",
+              providerRating: 4.5,
+              estimatedTime: "2-4 horas",
+            }
+          })
 
         setActiveServices(activeServicesData)
 
@@ -527,7 +296,7 @@ export default function ClientDashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button onClick={() => setNotifications(0)} variant="outline" className="relative bg-transparent">
+            {/* <Button onClick={() => setNotifications(0)} variant="outline" className="relative bg-transparent">
               <Bell className="w-4 h-4 mr-2" />
               Notificações
               {notifications > 0 && (
@@ -535,7 +304,7 @@ export default function ClientDashboard() {
                   {notifications}
                 </span>
               )}
-            </Button>
+            </Button> */}
 
             <Dialog open={showNewServiceModal} onOpenChange={setShowNewServiceModal}>
               <DialogTrigger asChild>
@@ -649,13 +418,12 @@ export default function ClientDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="active">Serviços Ativos</TabsTrigger>
             <TabsTrigger value="history">Histórico</TabsTrigger>
             <TabsTrigger value="favorites">Favoritos</TabsTrigger>
             <TabsTrigger value="payments">Pagamentos</TabsTrigger>
-            <TabsTrigger value="profile">Perfil</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -1126,210 +894,6 @@ export default function ClientDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="profile" className="space-y-6">
-            {/* Perfil do Cliente */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Informações Pessoais</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isEditingProfile ? (
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="name">Nome</Label>
-                          <Input
-                            id="name"
-                            placeholder="João Silva"
-                            value={profileData.name}
-                            onChange={(e) => handleInputChange("name", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            placeholder="joao.silva@email.com"
-                            value={profileData.email}
-                            onChange={(e) => handleInputChange("email", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="phone">Telefone</Label>
-                          <Input
-                            id="phone"
-                            placeholder="(11) 99999-9999"
-                            value={profileData.phone}
-                            onChange={(e) => handleInputChange("phone", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="bio">Bio</Label>
-                          <Textarea
-                            id="bio"
-                            placeholder="Descreva um pouco sobre você..."
-                            value={profileData.bio}
-                            onChange={(e) => handleInputChange("bio", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="location">Localização</Label>
-                          <Input
-                            id="location"
-                            placeholder="São Paulo, SP"
-                            value={profileData.location}
-                            onChange={(e) => handleInputChange("location", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="birthDate">Data de Nascimento</Label>
-                          <Input
-                            id="birthDate"
-                            type="date"
-                            value={profileData.birthDate}
-                            onChange={(e) => handleInputChange("birthDate", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="cpf">CPF</Label>
-                          <Input
-                            id="cpf"
-                            placeholder="123.456.789-00"
-                            value={profileData.cpf}
-                            onChange={(e) => handleInputChange("cpf", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Button onClick={handleSaveProfile} className="bg-blue-600 hover:bg-blue-700">
-                            Salvar
-                          </Button>
-                          <Button onClick={() => setIsEditingProfile(false)} variant="outline">
-                            Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-4">
-                          {profileImage ? (
-                            <AvatarImage src={profileImage || "/placeholder.svg"} alt="Profile Image" />
-                          ) : (
-                            <AvatarFallback className="bg-blue-500 text-white">JS</AvatarFallback>
-                          )}
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">{profileData.name}</h3>
-                            <p className="text-gray-600">{profileData.email}</p>
-                            <p className="text-gray-600">{profileData.phone}</p>
-                            <p className="text-gray-600">{profileData.location}</p>
-                            <p className="text-gray-600">Data de Nascimento: {profileData.birthDate}</p>
-                            <p className="text-gray-600">CPF: {profileData.cpf}</p>
-                          </div>
-                        </div>
-                        <div>
-                          <Button onClick={() => setIsEditingProfile(true)} className="bg-blue-600 hover:bg-blue-700">
-                            Editar Perfil
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-              <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Preferências de Notificação</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={profileData.preferences.emailNotifications}
-                            onCheckedChange={(checked) => handlePreferenceChange("emailNotifications", checked)}
-                          />
-                          <span>Email</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={profileData.preferences.smsNotifications}
-                            onCheckedChange={(checked) => handlePreferenceChange("smsNotifications", checked)}
-                          />
-                          <span>SMS</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={profileData.preferences.pushNotifications}
-                            onCheckedChange={(checked) => handlePreferenceChange("pushNotifications", checked)}
-                          />
-                          <span>Push</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={profileData.preferences.marketingEmails}
-                            onCheckedChange={(checked) => handlePreferenceChange("marketingEmails", checked)}
-                          />
-                          <span>Emails de Marketing</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações de Privacidade</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={profileData.privacy.showPhone}
-                            onCheckedChange={(checked) => handlePrivacyChange("showPhone", checked)}
-                          />
-                          <span>Mostrar Telefone</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={profileData.privacy.showEmail}
-                            onCheckedChange={(checked) => handlePrivacyChange("showEmail", checked)}
-                          />
-                          <span>Mostrar Email</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={profileData.privacy.showLocation}
-                            onCheckedChange={(checked) => handlePrivacyChange("showLocation", checked)}
-                          />
-                          <span>Mostrar Localização</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
       </main>
 
@@ -1337,3 +901,10 @@ export default function ClientDashboard() {
     </div>
   )
 }
+const [profileData, setProfileData] = useState({
+  name: "",
+  email: "",
+  phone: "",
+  location: "",
+})
+
