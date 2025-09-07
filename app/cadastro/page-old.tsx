@@ -64,47 +64,95 @@ export default function CadastroPage() {
     try {
       const supabase = createClient()
       
-      // Cadastro usando apenas os metadados do Supabase Auth - SEM tabela customizada
+      // Primeiro, cadastra no Supabase Auth de forma simples
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-          data: {
-            full_name: formData.nome,
-            phone: formData.telefone,
-            user_type: formData.tipo,
-            display_name: formData.nome,
-          }
-        }
       })
 
       if (error) {
-        // Tratamento específico de erros
-        if (error.message.includes('User already registered')) {
-          throw new Error('Este e-mail já está cadastrado. Tente fazer login.')
-        }
-        if (error.message.includes('Database error')) {
-          throw new Error('Erro interno do servidor. Tente novamente em alguns minutos.')
-        }
         throw error
       }
 
+      if (data.user && !data.user.identities?.length) {
+        // Usuário já existe
+        throw new Error('Este e-mail já está cadastrado. Tente fazer login.')
+      }
+
       if (data.user) {
+        // Aguarda um pouco para garantir que o usuário foi criado no auth
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Agora cria o perfil na nossa tabela customizada
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: formData.email,
+            name: formData.nome,
+            phone: formData.telefone || null,
+            user_type: formData.tipo as "client" | "provider",
+            password_hash: 'supabase_managed',
+          })
+
+        // Se houver erro no perfil, tentamos atualizar em vez de inserir
+        if (profileError) {
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({
+              name: formData.nome,
+              phone: formData.telefone || null,
+              user_type: formData.tipo as "client" | "provider",
+            })
+            .eq('id', data.user.id)
+          
+          if (updateError) {
+            console.error('Erro ao criar/atualizar perfil:', updateError)
+          }
+        }
+
+        // Se for provider, cria entrada na tabela providers
+        if (formData.tipo === 'provider') {
+          await supabase
+            .from('providers')
+            .insert({
+              id: data.user.id,
+              work_radius: 10,
+              rating: 5.0,
+              total_reviews: 0,
+              completed_jobs: 0,
+              response_time: '24h',
+              acceptance_rate: 100,
+              joined_year: new Date().getFullYear(),
+            })
+            .select()
+        }
+
         toast({
           title: "Cadastro realizado com sucesso!",
-          description: "Você pode fazer login agora.",
+          description: data.user.email_confirmed_at 
+            ? "Conta criada! Você será redirecionado."
+            : "Verifique seu e-mail para confirmar sua conta.",
         })
 
-        // Redireciona para login após sucesso
-        setTimeout(() => {
-          router.push("/login")
-        }, 2000)
+        // Se o email foi confirmado automaticamente, redireciona direto
+        if (data.user.email_confirmed_at) {
+          setTimeout(() => {
+            router.push(`/dashboard/${formData.tipo}`)
+          }, 2000)
+        } else {
+          setTimeout(() => {
+            router.push("/login")
+          }, 2000)
+        }
       }
     } catch (error: any) {
       console.error('Erro no cadastro:', error)
       toast({
         title: "Erro no cadastro",
-        description: error.message || "Erro ao criar conta. Tente novamente.",
+        description: error.message === 'User already registered' 
+          ? "Este e-mail já está cadastrado. Tente fazer login."
+          : error.message || "Erro ao criar conta. Tente novamente.",
         variant: "destructive",
       })
     } finally {

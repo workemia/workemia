@@ -51,7 +51,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
         read: false,
         urgent: true,
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: undefined,
         actionUrl: "/dashboard/prestador",
         data: { clientId: "client1", serviceType: "encanamento" },
       },
@@ -63,7 +63,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
         read: false,
         urgent: false,
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: undefined,
         actionUrl: "/chat",
         data: { chatId: "chat1", senderId: "client2" },
       },
@@ -85,7 +85,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
         read: false,
         urgent: false,
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: undefined,
         actionUrl: "/dashboard/prestador",
         data: { rating: 5, reviewId: "review1" },
       },
@@ -135,13 +135,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         title: "Nova Solicitação de Serviço",
         message: "Um cliente solicitou seus serviços",
         urgent: true,
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: undefined,
       },
       message: {
         title: "Nova Mensagem",
         message: "Você recebeu uma nova mensagem",
         urgent: false,
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: undefined,
       },
       payment: {
         title: "Pagamento Recebido",
@@ -152,7 +152,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         title: "Nova Avaliação",
         message: "Um cliente avaliou seu serviço",
         urgent: false,
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: undefined,
       },
     }
 

@@ -1,0 +1,67 @@
+-- Script para criar o usuário administrador no Supabase
+-- Execute este script no SQL Editor do Supabase Dashboard
+
+-- Primeiro, você precisa criar o usuário admin@servicehub.com manualmente no Supabase Auth Dashboard
+-- Ou usar este SQL se você tiver acesso direto ao banco:
+
+-- IMPORTANTE: Este script é apenas informativo
+-- Você deve criar o usuário admin@servicehub.com através do Supabase Dashboard:
+-- 1. Acesse o Supabase Dashboard
+-- 2. Vá em Authentication > Users
+-- 3. Clique em "Add user"
+-- 4. Email: admin@servicehub.com
+-- 5. Password: [defina uma senha segura]
+-- 6. User Metadata:
+--    {
+--      "full_name": "Administrador ServiceHub",
+--      "user_type": "admin"
+--    }
+
+-- Caso você precise atualizar metadados de usuários existentes:
+-- UPDATE auth.users 
+-- SET raw_user_meta_data = jsonb_set(
+--   COALESCE(raw_user_meta_data, '{}'), 
+--   '{user_type}', 
+--   '"admin"'
+-- )
+-- WHERE email IN (
+--   'admin@servicehub.com',
+--   'vitor.paula.lucas@gmail.com', 
+--   'zeneiltongranja@gmail.com'
+-- );
+
+-- Verificar usuários admin:
+-- SELECT 
+--   id,
+--   email,
+--   raw_user_meta_data,
+--   created_at
+-- FROM auth.users 
+-- WHERE email IN (
+--   'admin@servicehub.com',
+--   'vitor.paula.lucas@gmail.com', 
+--   'zeneiltongranja@gmail.com'
+-- );
+
+-- INSTRUÇÕES PARA CRIAR O USUÁRIO ADMIN:
+-- 
+-- 1. Acesse o Supabase Dashboard: https://supabase.com/dashboard
+-- 2. Selecione seu projeto
+-- 3. Vá em Authentication > Users
+-- 4. Clique em "Add user" (ou "Invite user")
+-- 5. Preencha:
+--    - Email: admin@servicehub.com
+--    - Password: [use uma senha forte, ex: Admin@ServiceHub2025!]
+--    - Auto Confirm User: ✅ (marcado)
+-- 6. Após criar, clique no usuário para editar
+-- 7. Na seção "User Metadata", adicione:
+--    {
+--      "full_name": "Administrador ServiceHub",
+--      "user_type": "admin"
+--    }
+-- 8. Salve as alterações
+--
+-- SENHA SUGERIDA (use uma mais segura em produção):
+-- Admin@ServiceHub2025!
+--
+-- Após criar, teste o login em: http://localhost:3000/login

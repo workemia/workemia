@@ -119,7 +119,7 @@ export function NotificationCenter() {
                       <div className="flex-shrink-0">
                         {notification.avatar ? (
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={notification.avatar || "/placeholder.svg"} />
+                            <AvatarImage src={notification.avatar} />
                             <AvatarFallback>
                               <Icon className="h-4 w-4" />
                             </AvatarFallback>
