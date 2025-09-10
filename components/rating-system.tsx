@@ -65,7 +65,6 @@ export function RatingSystem({
         clientId: "current-user-id", // Pegar do contexto de autenticação
       }
 
-      console.log("Rating submitted:", ratingData)
 
       toast({
         title: "Avaliação enviada!",
