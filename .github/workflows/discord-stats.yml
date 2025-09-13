@@ -1,0 +1,96 @@
+name: Discord Repository Stats
+
+on:
+  schedule:
+    # Executa diariamente às 9h UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Permite execução manual
+
+jobs:
+  send-stats:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Get repository statistics
+      id: stats
+      run: |
+        # Obter informações do repositório via GitHub API
+        REPO_INFO=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}")
+        
+        # Obter estatísticas de commits (último mês)
+        COMMITS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/commits?since=$(date -d '30 days ago' --iso-8601)" | jq length)
+        
+        # Obter PRs abertas
+        OPEN_PRS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/pulls?state=open" | jq length)
+        
+        # Obter Issues abertas
+        OPEN_ISSUES=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/issues?state=open" | jq length)
+        
+        # Extrair dados do repositório
+        STARS=$(echo $REPO_INFO | jq -r '.stargazers_count')
+        FORKS=$(echo $REPO_INFO | jq -r '.forks_count')
+        WATCHERS=$(echo $REPO_INFO | jq -r '.watchers_count')
+        
+        # Salvar nas variáveis de saída
+        echo "commits=$COMMITS" >> $GITHUB_OUTPUT
+        echo "open_prs=$OPEN_PRS" >> $GITHUB_OUTPUT
+        echo "open_issues=$OPEN_ISSUES" >> $GITHUB_OUTPUT
+        echo "stars=$STARS" >> $GITHUB_OUTPUT
+        echo "forks=$FORKS" >> $GITHUB_OUTPUT
+        echo "watchers=$WATCHERS" >> $GITHUB_OUTPUT
+
+    - name: Send to Discord
+      run: |
+        curl -H "Content-Type: application/json" \
+        -X POST \
+        -d '{
+          "embeds": [{
+            "title": "📊 Estatísticas do Repositório",
+            "description": "Relatório diário do repositório **${{ github.repository }}**",
+            "color": 3447003,
+            "fields": [
+              {
+                "name": "⭐ Stars",
+                "value": "${{ steps.stats.outputs.stars }}",
+                "inline": true
+              },
+              {
+                "name": "🍴 Forks", 
+                "value": "${{ steps.stats.outputs.forks }}",
+                "inline": true
+              },
+              {
+                "name": "👀 Watchers",
+                "value": "${{ steps.stats.outputs.watchers }}",
+                "inline": true
+              },
+              {
+                "name": "📝 Commits (30 dias)",
+                "value": "${{ steps.stats.outputs.commits }}",
+                "inline": true
+              },
+              {
+                "name": "🔀 PRs Abertas",
+                "value": "${{ steps.stats.outputs.open_prs }}",
+                "inline": true
+              },
+              {
+                "name": "🐛 Issues Abertas",
+                "value": "${{ steps.stats.outputs.open_issues }}",
+                "inline": true
+              }
+            ],
+            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'",
+            "footer": {
+              "text": "GitHub Stats Bot"
+            }
+          }]
+        }' \
+        ${{ secrets.DISCORD_WEBHOOK_URL }}
