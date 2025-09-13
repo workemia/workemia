@@ -35,6 +35,7 @@ export default function DashboardPrestador() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [services, setServices] = useState<Service[]>([])
+  const [availableServices, setAvailableServices] = useState<Service[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [stats, setStats] = useState({
     totalEarnings: 0,
@@ -82,28 +83,68 @@ export default function DashboardPrestador() {
       setLoading(true)
       const supabase = createClient()
 
-      const { data: servicesData } = await supabase
+      // Buscar serviços aceitos pelo prestador
+      const { data: servicesData, error: servicesError } = await supabase
         .from("services")
         .select(`
           *,
-          users!services_client_id_fkey (*)
+          client:client_id (
+            id,
+            email
+          ),
+          categories (
+            id,
+            name
+          )
         `)
         .eq("provider_id", userId)
         .order("created_at", { ascending: false })
 
-      if (servicesData) setServices(servicesData)
+      if (servicesError) {
+        console.error("Erro ao buscar serviços do prestador:", servicesError)
+      } else {
+        setServices(servicesData || [])
+      }
 
-      const { data: reviewsData } = await supabase
-        .from("reviews")
+      // Buscar serviços disponíveis (sem prestador)
+      const { data: availableServicesData, error: availableError } = await supabase
+        .from("services")
         .select(`
           *,
-          users!reviews_client_id_fkey (*)
+          client:client_id (
+            id,
+            email
+          ),
+          categories (
+            id,
+            name
+          )
+        `)
+        .is("provider_id", null)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+
+      if (availableError) {
+        console.error("Erro ao buscar serviços disponíveis:", availableError)
+      } else {
+        setAvailableServices(availableServicesData || [])
+      }
+
+      // Buscar reviews - usando uma query mais simples
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("reviews")
+        .select(`
+          *
         `)
         .eq("provider_id", userId)
         .order("created_at", { ascending: false })
         .limit(5)
 
-      if (reviewsData) setReviews(reviewsData)
+      if (reviewsError) {
+        console.error("Erro ao buscar reviews:", reviewsError)
+      } else {
+        setReviews(reviewsData || [])
+      }
 
       const completedServices = servicesData?.filter((s) => s.status === "completed") || []
       const totalEarnings = completedServices.reduce((sum, service) => sum + (service.final_price || 0), 0)
@@ -121,6 +162,31 @@ export default function DashboardPrestador() {
       console.error("Erro ao carregar dados do dashboard:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const acceptService = async (serviceId: string) => {
+    try {
+      const supabase = createClient()
+      
+      const { error } = await supabase
+        .from("services")
+        .update({ 
+          provider_id: user.id,
+          status: "accepted" 
+        })
+        .eq("id", serviceId)
+        .is("provider_id", null) // Só aceita se ainda não tiver prestador
+
+      if (error) {
+        console.error("Erro ao aceitar serviço:", error)
+        return
+      }
+
+      // Atualizar as listas
+      await fetchDashboardData(user.id)
+    } catch (error) {
+      console.error("Erro ao aceitar serviço:", error)
     }
   }
 
@@ -277,13 +343,98 @@ export default function DashboardPrestador() {
           </Card>
         </div>
 
-        <Tabs defaultValue="services" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="services">Serviços</TabsTrigger>
+        <Tabs defaultValue="opportunities" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="opportunities">Oportunidades</TabsTrigger>
+            <TabsTrigger value="services">Meus Serviços</TabsTrigger>
             <TabsTrigger value="calendar">Agenda</TabsTrigger>
             <TabsTrigger value="reviews">Avaliações</TabsTrigger>
             <TabsTrigger value="analytics">Análises</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="opportunities" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Novas Oportunidades</CardTitle>
+                <CardDescription>Solicitações de clientes aguardando prestadores</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {availableServices.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma oportunidade disponível</h3>
+                      <p className="text-gray-600">Não há solicitações de serviço disponíveis no momento.</p>
+                    </div>
+                  ) : (
+                    availableServices.map((service) => (
+                      <div key={service.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-semibold text-gray-900">{service.title}</h3>
+                              <Badge className="bg-green-100 text-green-800">
+                                <div className="flex items-center gap-1">
+                                  <AlertCircle className="h-4 w-4" />
+                                  Disponível
+                                </div>
+                              </Badge>
+                              {service.categories && (
+                                <Badge variant="outline">{service.categories.name}</Badge>
+                              )}
+                            </div>
+                            <p className="text-gray-600 mb-3 line-clamp-2">{service.description}</p>
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                <span>{service.client?.email || 'Cliente'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>
+                                  {service.preferred_date
+                                    ? new Date(service.preferred_date).toLocaleDateString("pt-BR")
+                                    : "Data flexível"}
+                                </span>
+                              </div>
+                              {service.budget_min && service.budget_max && (
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="h-4 w-4" />
+                                  <span>
+                                    R$ {service.budget_min} - R$ {service.budget_max}
+                                  </span>
+                                </div>
+                              )}
+                              {service.location && (
+                                <div className="flex items-center gap-1">
+                                  <span>📍 {service.location}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => acceptService(service.id)}
+                            >
+                              Ver Detalhes
+                            </Button>
+                            <Button 
+                              size="sm"
+                              onClick={() => acceptService(service.id)}
+                            >
+                              Aceitar Serviço
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="services" className="space-y-6">
             <Card>
@@ -317,7 +468,7 @@ export default function DashboardPrestador() {
                             <div className="flex items-center gap-4 text-sm text-gray-500">
                               <div className="flex items-center gap-1">
                                 <Users className="h-4 w-4" />
-                                <span>{service.users.name}</span>
+                                <span>{service.client?.email || 'Cliente'}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4" />
@@ -399,18 +550,13 @@ export default function DashboardPrestador() {
                       <div key={review.id} className="border-b pb-6 last:border-b-0">
                         <div className="flex items-start gap-4">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={review.users.avatar_url || undefined} />
                             <AvatarFallback>
-                              {review.users.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()}
+                              U
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-medium text-gray-900">{review.users.name}</h4>
+                              <h4 className="font-medium text-gray-900">Cliente</h4>
                               <div className="flex items-center">
                                 {[...Array(5)].map((_, i) => (
                                   <Star
