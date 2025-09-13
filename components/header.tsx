@@ -32,10 +32,42 @@ import { toast } from "@/hooks/use-toast"
 import { NotificationCenter } from "@/components/notifications/notification-center"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/hooks/use-auth"
+import { usePermissions } from "@/hooks/use-permissions"
+
+// Funções auxiliares para navegação baseada em role
+function getDashboardLink(role?: string): string {
+  switch (role) {
+    case 'admin':
+      return '/dashboard/admin'
+    case 'employee':
+      return '/dashboard/employee'
+    case 'provider':
+      return '/dashboard/prestador'
+    case 'client':
+      return '/dashboard/cliente'
+    default:
+      return '/dashboard/visitor'
+  }
+}
+
+function getServicesLink(role?: string): string {
+  switch (role) {
+    case 'admin':
+    case 'employee':
+      return '/dashboard/admin?tab=services'
+    case 'provider':
+      return '/dashboard/prestador?tab=services'
+    case 'client':
+      return '/dashboard/cliente?tab=services'
+    default:
+      return '/servicos'
+  }
+}
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, loading, logout, isAdmin } = useAuth()
+  const { user, loading, logout } = useAuth()
+  const { isAdmin, isEmployee, isProvider, isClient, getAccessibleRoutes } = usePermissions()
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -132,14 +164,14 @@ export function Header() {
             >
               💼 Seja Prestador
             </Link>
-            {isAdmin && (
+            {(isAdmin || isEmployee) && (
               <Link 
                 href="/docs" 
                 className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center gap-1"
               >
                 📚 Docs
                 <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
-                  Admin
+                  {isAdmin ? 'Admin' : 'Staff'}
                 </span>
               </Link>
             )}
@@ -198,11 +230,17 @@ export function Header() {
                         <div className="flex items-center mt-2">
                           <div
                             className={`w-2 h-2 rounded-full mr-2 ${
-                              (user.type === "cliente" || user.type === "client") ? "bg-green-500" : "bg-blue-500"
+                              user.role === 'admin' ? 'bg-red-500' :
+                              user.role === 'employee' ? 'bg-purple-500' :
+                              user.role === 'provider' ? 'bg-blue-500' :
+                              user.role === 'client' ? 'bg-green-500' : 'bg-gray-500'
                             }`}
                           ></div>
                           <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                            {(user.type === "cliente" || user.type === "client") ? "Cliente" : "Prestador"}
+                            {user.role === 'admin' ? 'Administrador' :
+                             user.role === 'employee' ? 'Funcionário' :
+                             user.role === 'provider' ? 'Prestador' :
+                             user.role === 'client' ? 'Cliente' : 'Visitante'}
                           </span>
                         </div>
                       </div>
@@ -211,7 +249,7 @@ export function Header() {
 
                     {/* Dashboard */}
                     <DropdownMenuItem asChild>
-                      <Link href={getDashboardLink()} className="cursor-pointer">
+                      <Link href={getDashboardLink(user.role)} className="cursor-pointer">
                         <Home className="mr-3 h-4 w-4" />
                         <span>Dashboard</span>
                       </Link>
@@ -234,9 +272,13 @@ export function Header() {
 
                     {/* Meus Serviços */}
                     <DropdownMenuItem asChild>
-                      <Link href={getServicesLink()} className="cursor-pointer">
+                      <Link href={getServicesLink(user.role)} className="cursor-pointer">
                         <Briefcase className="mr-3 h-4 w-4" />
-                        <span>{(user.type === "cliente" || user.type === "client") ? "Meus Serviços" : "Solicitações"}</span>
+                        <span>
+                          {user.role === 'client' ? 'Meus Serviços' : 
+                           user.role === 'provider' ? 'Solicitações' :
+                           'Gerenciar Serviços'}
+                        </span>
                       </Link>
                     </DropdownMenuItem>
 
