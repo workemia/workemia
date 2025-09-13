@@ -1,0 +1,36 @@
+name: Test Discord Webhook
+
+on:
+  workflow_dispatch:  # Só executa manualmente
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Test Discord Webhook
+      run: |
+        if [ -z "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+          echo "❌ DISCORD_WEBHOOK_URL não configurado!"
+          exit 1
+        fi
+        
+        # Enviar mensagem de teste
+        curl -H "Content-Type: application/json" \
+        -X POST \
+        -d '{
+          "embeds": [{
+            "title": "🧪 Teste de Conexão",
+            "description": "Webhook do Discord configurado com sucesso!",
+            "color": 65280,
+            "fields": [{
+              "name": "Repositório",
+              "value": "${{ github.repository }}",
+              "inline": true
+            }],
+            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
+          }]
+        }' \
+        "${{ secrets.DISCORD_WEBHOOK_URL }}"
+        
+        echo "✅ Mensagem de teste enviada!"

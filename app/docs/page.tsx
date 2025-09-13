@@ -186,11 +186,13 @@ types/                  # Definições TypeScript
 
       <DocsHR />
 
-      <DocsP className="text-center">
-        <DocsStrong>
-          🌟 ServiceHub - Conectando pessoas através de serviços de qualidade
-        </DocsStrong>
-      </DocsP>
+      <div className="text-center">
+        <DocsP>
+          <DocsStrong>
+            🌟 ServiceHub - Conectando pessoas através de serviços de qualidade
+          </DocsStrong>
+        </DocsP>
+      </div>
     </>
   )
 }

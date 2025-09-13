@@ -29,7 +29,6 @@ export default function SejaPrestadorPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // Aqui você implementaria o envio do formulário
-    console.log("Dados do formulário:", formData)
     alert("Cadastro enviado com sucesso! Entraremos em contato em breve.")
     router.push("/")
   }

@@ -96,7 +96,12 @@ export default function ClientDashboard() {
   const [serviceHistory, setServiceHistory] = useState<Service[]>([])
   const [favoriteProviders, setFavoriteProviders] = useState<Provider[]>([])
   const [paymentHistory, setPaymentHistory] = useState<any[]>([])
-
+  const [profileData, setProfileData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+  })
 
   const [newService, setNewService] = useState({
     title: "",
@@ -901,10 +906,4 @@ export default function ClientDashboard() {
     </div>
   )
 }
-const [profileData, setProfileData] = useState({
-  name: "",
-  email: "",
-  phone: "",
-  location: "",
-})
 

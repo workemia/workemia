@@ -5,12 +5,27 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { InteractiveMap } from "@/components/interactive-map"
 import { Button } from "@/components/ui/button"
+import { useStats } from "@/hooks/use-stats"
+import { useScrollToSection } from "@/hooks/use-scroll"
+import { ChevronDown } from "lucide-react"
 
 export default function HomePage() {
   const router = useRouter()
+  const { stats, loading } = useStats()
+  const { scrollToSection } = useScrollToSection()
 
   const handleNavigation = (path: string) => {
     router.push(path)
+  }
+
+  const handleScrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      })
+    }
   }
 
   const categories = [
@@ -58,9 +73,9 @@ export default function HomePage() {
 
       <main>
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 py-16 md:py-24 text-white">
-          <div className="max-w-4xl mx-auto text-center px-4">
-            <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+        <section id="inicio" className="h-screen bg-cover bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 py-16 md:py-24 text-white">
+          <div className="flex flex-col items-center justify-center max-w-4xl max-h-screen mx-auto text-center h-full">
+            <h1 className="text-3xl md:text-5xl font-bold mb-12 leading-tight">
               Encontre o serviço perfeito perto de você
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed opacity-90">
@@ -86,27 +101,47 @@ export default function HomePage() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold mb-2">4</div>
+                <div className="text-3xl md:text-4xl font-bold mb-2">
+                  {loading ? "..." : stats.totalUsers.toLocaleString()}
+                </div>
                 <div className="text-sm md:text-base opacity-80">Usuários Ativos</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold mb-2">2</div>
+                <div className="text-3xl md:text-4xl font-bold mb-2">
+                  {loading ? "..." : stats.totalProviders.toLocaleString()}
+                </div>
                 <div className="text-sm md:text-base opacity-80">Prestadores</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold mb-2">0</div>
+                <div className="text-3xl md:text-4xl font-bold mb-2">
+                  {loading ? "..." : stats.completedServices.toLocaleString()}
+                </div>
                 <div className="text-sm md:text-base opacity-80">Serviços Concluídos</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold mb-2">4.9</div>
+                <div className="text-3xl md:text-4xl font-bold mb-2">
+                  {loading ? "..." : (stats.averageRating || 4.9).toFixed(1)}
+                </div>
                 <div className="text-sm md:text-base opacity-80">Avaliação Média</div>
               </div>
+            </div>
+            
+            {/* Botão para scroll para próxima seção */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => scrollToSection('categorias')}
+                className="text-white hover:text-white hover:bg-white/10 animate-bounce"
+              >
+                <ChevronDown className="h-6 w-6" />
+              </Button>
             </div>
           </div>
         </section>
 
         {/* Categories Section */}
-        <section className="py-16 bg-white">
+        <section id="categorias" className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Categorias Populares</h2>
@@ -120,15 +155,29 @@ export default function HomePage() {
                   onClick={() => handleNavigation(`/servicos?categoria=${category.name.toLowerCase()}`)}
                   className="text-center p-6 rounded-lg hover:shadow-lg transition-all cursor-pointer hover:bg-gray-50 group"
                 >
-                  <div
-                    className={`text-5xl md:text-6xl mb-4 ${category.color} group-hover:scale-110 transition-transform`}
-                  >
-                    <i className={category.icon}></i>
+                  <div className="mb-4 group-hover:scale-110 transition-transform flex justify-center">
+                    <img 
+                      src={`/animated/home/${category.name.toLowerCase()}.gif`} 
+                      alt={category.name} 
+                      className="w-16 h-16 md:w-20 md:h-20"
+                    />
                   </div>
                   <h3 className="text-lg md:text-2xl font-semibold text-gray-900 mb-2">{category.name}</h3>
                   <p className="text-gray-600 text-sm md:text-base leading-relaxed">{category.description}</p>
                 </div>
               ))}
+            </div>
+            
+            {/* Botão para próxima seção */}
+            <div className="text-center mt-12">
+              <Button
+                variant="outline"
+                onClick={() => scrollToSection('como-funciona')}
+                className="flex items-center gap-2"
+              >
+                Ver Como Funciona
+                <ChevronDown className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </section>
@@ -137,7 +186,7 @@ export default function HomePage() {
         <InteractiveMap />
 
         {/* How It Works Section */}
-        <section className="py-16 bg-white">
+        <section id="como-funciona" className="py-16 bg-white">
           <div className="max-w-6xl mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Como Funciona</h2>
