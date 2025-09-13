@@ -3,18 +3,8 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { isAdminEmail } from "@/lib/admin-config"
+import { AuthUser, UserRole, DEFAULT_PERMISSIONS } from "@/types/auth"
 import type { User } from "@supabase/supabase-js"
-
-export interface AuthUser {
-  id: string
-  name: string
-  email: string
-  type: "client" | "provider" | "cliente" | "prestador" | "admin" // Suporte aos formatos e admin
-  avatar?: string
-  phone?: string
-  service?: string
-  isAdmin?: boolean
-}
 
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -35,17 +25,36 @@ export function useAuth() {
 
         // Verificar se é admin usando configuração centralizada
         const isAdmin = isAdminEmail(user.email)
+        
+        // Determinar role baseado no metadata e admin config
+        let role: UserRole = 'client'
+        if (isAdmin) {
+          role = 'admin'
+        } else if (user.user_metadata?.user_type) {
+          // Converter tipos antigos para novos
+          const userType = user.user_metadata.user_type
+          if (userType === 'provider' || userType === 'prestador') {
+            role = 'provider'
+          } else if (userType === 'client' || userType === 'cliente') {
+            role = 'client'
+          } else if (userType === 'employee') {
+            role = 'employee'
+          }
+        }
 
         // Converter dados do Supabase para formato do header
         const authUser: AuthUser = {
           id: user.id,
           name: user.user_metadata?.full_name || user.user_metadata?.display_name || user.email?.split('@')[0] || 'Usuário',
           email: user.email || '',
-          type: isAdmin ? 'admin' : (user.user_metadata?.user_type || 'client'),
+          role,
+          permissions: DEFAULT_PERMISSIONS[role],
           avatar: user.user_metadata?.avatar_url,
-          phone: user.user_metadata?.phone,
           service: user.user_metadata?.service,
-          isAdmin,
+          isAdmin: role === 'admin',
+          isEmployee: role === 'employee',
+          department: user.user_metadata?.department,
+          level: user.user_metadata?.level
         }
 
         setUser(authUser)
@@ -63,16 +72,34 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         const isAdmin = isAdminEmail(session.user.email)
+        
+        // Determinar role baseado no metadata e admin config
+        let role: UserRole = 'client'
+        if (isAdmin) {
+          role = 'admin'
+        } else if (session.user.user_metadata?.user_type) {
+          const userType = session.user.user_metadata.user_type
+          if (userType === 'provider' || userType === 'prestador') {
+            role = 'provider'
+          } else if (userType === 'client' || userType === 'cliente') {
+            role = 'client'
+          } else if (userType === 'employee') {
+            role = 'employee'
+          }
+        }
 
         const authUser: AuthUser = {
           id: session.user.id,
           name: session.user.user_metadata?.full_name || session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Usuário',
           email: session.user.email || '',
-          type: isAdmin ? 'admin' : (session.user.user_metadata?.user_type || 'client'),
+          role,
+          permissions: DEFAULT_PERMISSIONS[role],
           avatar: session.user.user_metadata?.avatar_url,
-          phone: session.user.user_metadata?.phone,
           service: session.user.user_metadata?.service,
-          isAdmin,
+          isAdmin: role === 'admin',
+          isEmployee: role === 'employee',
+          department: session.user.user_metadata?.department,
+          level: session.user.user_metadata?.level
         }
         setUser(authUser)
       } else if (event === 'SIGNED_OUT') {
@@ -102,8 +129,12 @@ export function useAuth() {
     loading,
     logout,
     isAuthenticated: !!user,
-    isClient: user?.type === 'client' || user?.type === 'cliente',
-    isProvider: user?.type === 'provider' || user?.type === 'prestador',
-    isAdmin: user?.isAdmin || user?.type === 'admin',
+    isClient: user?.role === 'client',
+    isProvider: user?.role === 'provider', 
+    isEmployee: user?.role === 'employee',
+    isAdmin: user?.role === 'admin',
+    isVisitor: user?.role === 'visitor',
+    role: user?.role,
+    permissions: user?.permissions
   }
 }
