@@ -2,13 +2,17 @@ name: Discord Repository Stats
 
 on:
   schedule:
-    # Executa diariamente às 9h UTC
     - cron: '0 9 * * *'
-  workflow_dispatch: # Permite execução manual
+  workflow_dispatch:
 
 jobs:
   send-stats:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+      metadata: read
     
     steps:
     - name: Checkout repository
@@ -17,26 +21,77 @@ jobs:
     - name: Get repository statistics
       id: stats
       run: |
-        # Obter informações do repositório via GitHub API
-        REPO_INFO=$(curl -s -H "Authorization: token ${{ secrets.WEB_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}")
+        # Função para fazer requisições com tratamento de erro
+        make_request() {
+          local url=$1
+          local response=$(curl -s -w "%{http_code}" -H "Authorization: token ${{ secrets.WEB_TOKEN }}" "$url")
+          local http_code="${response: -3}"
+          local body="${response%???}"
+          
+          if [[ "$http_code" -eq 200 ]]; then
+            echo "$body"
+          else
+            echo "Error: HTTP $http_code for $url" >&2
+            echo "{}"
+          fi
+        }
+        
+        # Obter informações do repositório
+        echo "Obtendo informações do repositório..."
+        REPO_INFO=$(make_request "https://api.github.com/repos/${{ github.repository }}")
+        
+        # Verificar se obtemos dados válidos
+        if echo "$REPO_INFO" | jq empty 2>/dev/null; then
+          echo "✅ Dados do repositório obtidos com sucesso"
+        else
+          echo "❌ Erro ao obter dados do repositório"
+          REPO_INFO='{"stargazers_count": 0, "forks_count": 0, "watchers_count": 0}'
+        fi
         
         # Obter estatísticas de commits (último mês)
-        COMMITS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/commits?since=$(date -d '30 days ago' --iso-8601)" | jq length)
+        echo "Obtendo commits dos últimos 30 dias..."
+        COMMITS_DATA=$(make_request "https://api.github.com/repos/${{ github.repository }}/commits?since=$(date -d '30 days ago' --iso-8601)&per_page=100")
+        
+        if echo "$COMMITS_DATA" | jq empty 2>/dev/null && [ "$COMMITS_DATA" != "{}" ]; then
+          COMMITS=$(echo "$COMMITS_DATA" | jq length)
+        else
+          COMMITS=0
+        fi
         
         # Obter PRs abertas
-        OPEN_PRS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/pulls?state=open" | jq length)
+        echo "Obtendo PRs abertas..."
+        PRS_DATA=$(make_request "https://api.github.com/repos/${{ github.repository }}/pulls?state=open")
         
-        # Obter Issues abertas
-        OPEN_ISSUES=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/issues?state=open" | jq length)
+        if echo "$PRS_DATA" | jq empty 2>/dev/null && [ "$PRS_DATA" != "{}" ]; then
+          OPEN_PRS=$(echo "$PRS_DATA" | jq length)
+        else
+          OPEN_PRS=0
+        fi
         
-        # Extrair dados do repositório
-        STARS=$(echo $REPO_INFO | jq -r '.stargazers_count')
-        FORKS=$(echo $REPO_INFO | jq -r '.forks_count')
-        WATCHERS=$(echo $REPO_INFO | jq -r '.watchers_count')
+        # Obter Issues abertas (excluindo PRs)
+        echo "Obtendo issues abertas..."
+        ISSUES_DATA=$(make_request "https://api.github.com/repos/${{ github.repository }}/issues?state=open")
+        
+        if echo "$ISSUES_DATA" | jq empty 2>/dev/null && [ "$ISSUES_DATA" != "{}" ]; then
+          # Filtrar apenas issues (não PRs)
+          OPEN_ISSUES=$(echo "$ISSUES_DATA" | jq '[.[] | select(.pull_request == null)] | length')
+        else
+          OPEN_ISSUES=0
+        fi
+        
+        # Extrair dados do repositório com valores padrão
+        STARS=$(echo "$REPO_INFO" | jq -r '.stargazers_count // 0')
+        FORKS=$(echo "$REPO_INFO" | jq -r '.forks_count // 0')
+        WATCHERS=$(echo "$REPO_INFO" | jq -r '.watchers_count // 0')
+        
+        # Debug: mostrar valores obtidos
+        echo "Debug - Valores obtidos:"
+        echo "Stars: $STARS"
+        echo "Forks: $FORKS" 
+        echo "Watchers: $WATCHERS"
+        echo "Commits (30d): $COMMITS"
+        echo "PRs abertas: $OPEN_PRS"
+        echo "Issues abertas: $OPEN_ISSUES"
         
         # Salvar nas variáveis de saída
         echo "commits=$COMMITS" >> $GITHUB_OUTPUT
@@ -89,7 +144,7 @@ jobs:
             ],
             "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'",
             "footer": {
-              "text": "GitHub Stats Bot"
+              "text": "GitHub Stats Bot - Service-Workee"
             }
           }]
         }' \
