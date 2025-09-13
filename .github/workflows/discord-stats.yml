@@ -12,7 +12,6 @@ jobs:
       contents: read
       issues: read
       pull-requests: read
-      metadata: read
     
     steps:
     - name: Checkout repository
