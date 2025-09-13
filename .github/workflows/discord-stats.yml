@@ -24,7 +24,7 @@ jobs:
         # Função para fazer requisições com tratamento de erro
         make_request() {
           local url=$1
-          local response=$(curl -s -w "%{http_code}" -H "Authorization: token ${{ secrets.WEB_TOKEN }}" "$url")
+          local response=$(curl -s -w "%{http_code}" -H "Authorization: token ${{ secrets.PAT_TOKEN }}" "$url")
           local http_code="${response: -3}"
           local body="${response%???}"
           
