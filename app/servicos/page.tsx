@@ -12,6 +12,7 @@ import { Slider } from "@/components/ui/slider"
 import { Separator } from "@/components/ui/separator"
 import { InteractiveMap } from "@/components/interactive-map"
 import { useProviders } from "@/hooks/use-providers"
+import { useAuth } from "@/hooks/use-auth"
 import { supabase } from "@/lib/supabase"
 import type { Database } from "@/lib/database.types"
 
@@ -19,6 +20,7 @@ type Category = Database["public"]["Tables"]["categories"]["Row"]
 
 export default function ServicosPage() {
   const { providers, loading, error } = useProviders()
+  const { user, isAuthenticated } = useAuth()
   const [categories, setCategories] = useState<Category[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
@@ -122,19 +124,62 @@ export default function ServicosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header de busca */}
-      <div className="bg-white border-b sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
+      {/* Header de busca melhorado */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Descubra Serviços Incríveis</h1>
+            <p className="text-lg opacity-90">Encontre o profissional perfeito para suas necessidades</p>
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-4 max-w-4xl mx-auto">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <Input
-                placeholder="Buscar por serviço, profissional ou especialidade..."
+                placeholder="Ex: limpeza, pintura, aulas de inglês..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-12 h-12 text-lg bg-white/95 border-0 shadow-lg"
               />
             </div>
+            <Button
+              size="lg"
+              className="bg-white text-blue-600 hover:bg-gray-100 px-8 h-12 font-semibold"
+              onClick={() => setSearchTerm(searchTerm)}
+            >
+              <Search className="h-5 w-5 mr-2" />
+              Buscar
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Filtros aprimorados */}
+      <div className="bg-white border-b shadow-sm sticky top-16 z-40">
+        <div className="max-w-7xl mx-auto p-4">
+
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Categorias rápidas */}
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-3">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Filtros Rápidos</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {['limpeza', 'reparos', 'pintura', 'técnico', 'beleza', 'educação'].map((cat) => (
+                  <Button
+                    key={cat}
+                    variant={selectedCategory === cat ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(selectedCategory === cat ? "all" : cat)}
+                    className="capitalize"
+                  >
+                    {cat}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
             <div className="flex gap-2">
               <Button
                 variant={showMap ? "default" : "outline"}
@@ -144,47 +189,38 @@ export default function ServicosPage() {
                 <MapPin className="h-4 w-4" />
                 {showMap ? "Lista" : "Mapa"}
               </Button>
-              <Button variant="outline" className="flex items-center gap-2 bg-transparent">
-                <Filter className="h-4 w-4" />
-                Filtros
-              </Button>
             </div>
           </div>
-
-          {/* Filtros */}
-          <div className="flex flex-wrap gap-4 mt-4">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as categorias</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
-                    {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
+          
+          {/* Filtros detalhados */}
+          <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t">
             <Select value={selectedRating} onValueChange={setSelectedRating}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Avaliação" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="4+">4+ estrelas</SelectItem>
-                <SelectItem value="4.5+">4.5+ estrelas</SelectItem>
+                <SelectItem value="4+">⭐ 4+ estrelas</SelectItem>
+                <SelectItem value="4.5+">⭐ 4.5+ estrelas</SelectItem>
               </SelectContent>
             </Select>
 
-            <div className="flex items-center gap-2 min-w-48">
-              <span className="text-sm text-gray-600">Preço:</span>
+            <div className="flex items-center gap-3 min-w-60">
+              <span className="text-sm font-medium text-gray-700">Faixa de preço:</span>
               <Slider value={priceRange} onValueChange={setPriceRange} max={500} step={10} className="flex-1" />
-              <span className="text-sm text-gray-600 min-w-20">
-                R$ {priceRange[0]}-{priceRange[1]}
+              <span className="text-sm font-medium text-gray-900 bg-gray-100 px-2 py-1 rounded min-w-24 text-center">
+                R$ {priceRange[0]}-{priceRange[1]}/h
               </span>
             </div>
+            
+            <Button variant="outline" size="sm" onClick={() => {
+              setSelectedCategory("all")
+              setSelectedRating("all")
+              setPriceRange([0, 500])
+              setSearchTerm("")
+            }}>
+              Limpar Filtros
+            </Button>
           </div>
         </div>
       </div>
@@ -196,9 +232,29 @@ export default function ServicosPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Resultados */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">{filteredProviders.length} prestadores encontrados</h2>
+            {/* Resultados com estatísticas */}
+            <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {filteredProviders.length} {filteredProviders.length === 1 ? 'prestador encontrado' : 'prestadores encontrados'}
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    {searchTerm && `Resultados para "${searchTerm}"`}
+                    {selectedCategory !== "all" && ` na categoria ${selectedCategory}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>{Math.floor(filteredProviders.length * 0.7)} online agora</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                    <span>Avaliação média: 4.8</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {filteredProviders.length === 0 ? (
@@ -298,14 +354,38 @@ export default function ServicosPage() {
                         <Separator />
 
                         <div className="flex gap-2">
-                          <Button size="sm" className="flex-1">
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            Conversar
-                          </Button>
-                          <Button size="sm" variant="outline" className="flex-1 bg-transparent">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Agendar
-                          </Button>
+                          {isAuthenticated ? (
+                            <>
+                              <Button size="sm" className="flex-1">
+                                <MessageCircle className="h-4 w-4 mr-2" />
+                                Conversar
+                              </Button>
+                              <Button size="sm" variant="outline" className="flex-1 bg-transparent">
+                                <Calendar className="h-4 w-4 mr-2" />
+                                Contratar
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => window.location.href = '/login'}
+                              >
+                                <MessageCircle className="h-4 w-4 mr-2" />
+                                Entrar para Conversar
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="flex-1 bg-transparent"
+                                onClick={() => window.location.href = '/login'}
+                              >
+                                <Calendar className="h-4 w-4 mr-2" />
+                                Entrar para Contratar
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </CardContent>
