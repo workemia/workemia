@@ -99,12 +99,12 @@ export function Header() {
 
   const getDashboardLink = () => {
     if (!user) return "/login"
-    return (user.type === "cliente" || user.type === "client") ? "/dashboard/cliente" : "/dashboard/prestador"
+    return (user.role === "client") ? "/dashboard/cliente" : "/dashboard/prestador"
   }
 
   const getServicesLink = () => {
     if (!user) return "/servicos"
-    return (user.type === "cliente" || user.type === "client") ? "/servicos" : "/dashboard/prestador?tab=requests"
+    return (user.role === "client") ? "/servicos" : "/dashboard/prestador?tab=requests"
   }
 
   // Loading state
@@ -129,17 +129,18 @@ export function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b dark:border-gray-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-              Service Workee
+            <Link href="/" className="text-lg sm:text-2xl font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+              <span className="hidden sm:inline">Service Workee</span>
+              <span className="sm:hidden">SW</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="hidden lg:flex items-center space-x-1">
             <button 
               onClick={() => handleScrollToSection('inicio')}
               className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center gap-2"
@@ -147,19 +148,19 @@ export function Header() {
               <img src="/animated/navbar/inicio.gif" alt="Início" className="w-5 h-5" />
               Início
             </button>
-            <Link 
-              href="/servicos" 
-              className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center gap-2"
-            >
-              <img src="/animated/navbar/servicos.gif" alt="Serviços" className="w-5 h-5" />
-              Serviços
-            </Link>
             <button 
               onClick={() => handleScrollToSection('categorias')}
               className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center gap-2"
             >
               <img src="/animated/navbar/categorias.gif" alt="Categorias" className="w-5 h-5" />
               Categorias
+            </button>
+            <button 
+              onClick={() => handleScrollToSection('servicos')}
+              className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center gap-2"
+            >
+              <img src="/animated/navbar/servicos.gif" alt="Serviços" className="w-5 h-5" />
+              Serviços
             </button>
             <button 
               onClick={() => handleScrollToSection('como-funciona')}
@@ -175,7 +176,7 @@ export function Header() {
               <img src="/animated/navbar/prestador.gif" alt="Seja Prestador" className="w-5 h-5" />
               Seja Prestador
             </Link>
-            {(isAdmin || isEmployee) && (
+            {user && (isAdmin() || isEmployee()) && (
               <Link 
                 href="/docs" 
                 className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center gap-2"
@@ -183,19 +184,11 @@ export function Header() {
                 <img src="/animated/navbar/docs.gif" alt="Docs" className="w-5 h-5" />
                 Docs
                 <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
-                  {isAdmin ? 'Admin' : 'Staff'}
+                  {isAdmin() ? 'Admin' : 'Staff'}
                 </span>
               </Link>
             )}
           </nav>
-
-          {/* Search Bar */}
-          {/* <div className="hidden lg:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
-              <Input type="text" placeholder="Buscar serviços..." className="pl-10 pr-4 w-full dark:bg-gray-800 dark:border-gray-700" />
-            </div>
-          </div> */}
 
           {/* User Actions */}
           <div className="flex items-center space-x-2">
@@ -261,7 +254,7 @@ export function Header() {
 
                     {/* Dashboard */}
                     <DropdownMenuItem asChild>
-                      <Link href={getDashboardLink(user.role)} className="cursor-pointer">
+                      <Link href={getDashboardLink()} className="cursor-pointer">
                         <Home className="mr-3 h-4 w-4" />
                         <span>Dashboard</span>
                       </Link>
@@ -271,7 +264,7 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link
                         href={
-                          (user.type === "cliente" || user.type === "client")
+                          (user.role === "client")
                             ? "/dashboard/cliente?tab=active"
                             : "/dashboard/prestador?tab=schedule"
                         }
@@ -284,7 +277,7 @@ export function Header() {
 
                     {/* Meus Serviços */}
                     <DropdownMenuItem asChild>
-                      <Link href={getServicesLink(user.role)} className="cursor-pointer">
+                      <Link href={getServicesLink()} className="cursor-pointer">
                         <Briefcase className="mr-3 h-4 w-4" />
                         <span>
                           {user.role === 'client' ? 'Meus Serviços' : 
@@ -321,7 +314,7 @@ export function Header() {
                     </DropdownMenuItem>
 
                     {/* Favoritos (apenas para clientes) */}
-                    {(user.type === "cliente" || user.type === "client") && (
+                    {user.role === "client" && (
                       <DropdownMenuItem asChild>
                         <Link href="/dashboard/cliente?tab=favorites" className="cursor-pointer">
                           <Heart className="mr-3 h-4 w-4" />
@@ -372,7 +365,7 @@ export function Header() {
             )}
 
             {/* Mobile Menu Button */}
-            <Button variant="ghost" size="sm" className="md:hidden" onClick={toggleMenu}>
+            <Button variant="ghost" size="sm" className="lg:hidden" onClick={toggleMenu}>
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
@@ -380,8 +373,8 @@ export function Header() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-lg">
-            <div className="px-4 pt-4 pb-6 space-y-2">
+          <div className="lg:hidden border-t bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-lg">
+            <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-4 sm:pb-6 space-y-1.5 sm:space-y-2">
               {/* Mobile Search */}
               <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
@@ -393,7 +386,7 @@ export function Header() {
               </div>
 
               <button
-                className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors w-full text-left"
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors w-full text-left min-h-[48px] active:bg-gray-100 dark:active:bg-gray-700"
                 onClick={() => {
                   setIsMenuOpen(false)
                   handleScrollToSection('inicio')
@@ -404,14 +397,14 @@ export function Header() {
               </button>
               <Link
                 href="/servicos"
-                className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors min-h-[48px] active:bg-gray-100 dark:active:bg-gray-700"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <img src="/animated/navbar/servicos.gif" alt="Serviços" className="w-6 h-6" />
                 <span>Serviços</span>
               </Link>
               <button
-                className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors w-full text-left"
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors w-full text-left min-h-[48px] active:bg-gray-100 dark:active:bg-gray-700"
                 onClick={() => {
                   setIsMenuOpen(false)
                   handleScrollToSection('categorias')
@@ -421,7 +414,7 @@ export function Header() {
                 <span>Categorias</span>
               </button>
               <button
-                className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors w-full text-left"
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors w-full text-left min-h-[48px] active:bg-gray-100 dark:active:bg-gray-700"
                 onClick={() => {
                   setIsMenuOpen(false)
                   handleScrollToSection('como-funciona')
@@ -432,13 +425,13 @@ export function Header() {
               </button>
               <Link
                 href="/seja-prestador"
-                className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors min-h-[48px] active:bg-gray-100 dark:active:bg-gray-700"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <img src="/animated/navbar/prestador.gif" alt="Seja Prestador" className="w-6 h-6" />
                 <span>Seja Prestador</span>
               </Link>
-              {isAdmin && (
+              {user && (isAdmin() || isEmployee()) && (
                 <Link
                   href="/docs"
                   className="flex items-center justify-between px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
@@ -447,7 +440,7 @@ export function Header() {
                   <span className="flex items-center gap-2">
                     <img src="/animated/navbar/docs.gif" alt="Docs" className="w-6 h-6" />
                     <span>Docs</span>
-                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">Admin</span>
+                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">{isAdmin() ? 'Admin' : 'Staff'}</span>
                   </span>
                 </Link>
               )}
@@ -470,7 +463,7 @@ export function Header() {
 
                   <Link
                     href={
-                      (user.type === "cliente" || user.type === "client") 
+                      (user.role === "client") 
                         ? "/dashboard/cliente?tab=active" 
                         : "/dashboard/prestador?tab=schedule"
                     }
@@ -487,7 +480,7 @@ export function Header() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Briefcase className="mr-3 h-5 w-5" />
-                    {(user.type === "cliente" || user.type === "client") ? "Meus Serviços" : "Solicitações"}
+                    {(user.role === "client") ? "Meus Serviços" : "Solicitações"}
                   </Link>
 
                   <Link
