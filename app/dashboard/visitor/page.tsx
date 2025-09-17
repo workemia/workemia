@@ -1,13 +1,21 @@
-'use client'
+"use client";
 
-import { usePermissions } from '@/hooks/use-permissions'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Search, MapPin, Star, Users, ArrowRight, Shield, Clock } from 'lucide-react'
-import Link from 'next/link'
+import { usePermissions } from "@/hooks/use-permissions";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Search,
+  MapPin,
+  Star,
+  Users,
+  ArrowRight,
+  Shield,
+  Clock,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function VisitorDashboard() {
-  const { user } = usePermissions()
+  const { user } = usePermissions();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -27,7 +35,11 @@ export default function VisitorDashboard() {
               </Button>
             </Link>
             <Link href="/servicos">
-              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-blue-600">
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-white border-white hover:bg-white hover:text-blue-600"
+              >
                 Explorar Serviços
               </Button>
             </Link>
@@ -38,9 +50,12 @@ export default function VisitorDashboard() {
       {/* Features */}
       <div className="py-16 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Como Funciona</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Como Funciona
+          </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Nossa plataforma conecta você aos melhores profissionais da sua região de forma rápida e segura
+            Nossa plataforma conecta você aos melhores profissionais da sua
+            região de forma rápida e segura
           </p>
         </div>
 
@@ -52,7 +67,8 @@ export default function VisitorDashboard() {
               </div>
               <h3 className="text-xl font-semibold mb-2">1. Busque</h3>
               <p className="text-gray-600">
-                Encontre o serviço que você precisa em nossa ampla categoria de profissionais
+                Encontre o serviço que você precisa em nossa ampla categoria de
+                profissionais
               </p>
             </CardContent>
           </Card>
@@ -64,7 +80,8 @@ export default function VisitorDashboard() {
               </div>
               <h3 className="text-xl font-semibold mb-2">2. Compare</h3>
               <p className="text-gray-600">
-                Veja perfis, avaliações e propostas de diferentes prestadores qualificados
+                Veja perfis, avaliações e propostas de diferentes prestadores
+                qualificados
               </p>
             </CardContent>
           </Card>
@@ -76,7 +93,8 @@ export default function VisitorDashboard() {
               </div>
               <h3 className="text-xl font-semibold mb-2">3. Contrate</h3>
               <p className="text-gray-600">
-                Escolha o melhor profissional e tenha a segurança de pagamento protegido
+                Escolha o melhor profissional e tenha a segurança de pagamento
+                protegido
               </p>
             </CardContent>
           </Card>
@@ -84,50 +102,32 @@ export default function VisitorDashboard() {
 
         {/* Categorias Populares */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">Categorias Populares</h2>
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
+            Categorias Populares
+          </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { name: 'Limpeza', icon: '🧹', count: '234 prestadores' },
-              { name: 'Eletricista', icon: '⚡', count: '156 prestadores' },
-              { name: 'Encanador', icon: '🔧', count: '189 prestadores' },
-              { name: 'Pintor', icon: '🎨', count: '145 prestadores' },
-              { name: 'Jardinagem', icon: '🌱', count: '98 prestadores' },
-              { name: 'Montagem', icon: '🔨', count: '167 prestadores' },
-              { name: 'Reformas', icon: '🏠', count: '89 prestadores' },
-              { name: 'Informática', icon: '💻', count: '123 prestadores' }
+              { name: "Limpeza", icon: "🧹", count: "234 prestadores" },
+              { name: "Eletricista", icon: "⚡", count: "156 prestadores" },
+              { name: "Encanador", icon: "🔧", count: "189 prestadores" },
+              { name: "Pintor", icon: "🎨", count: "145 prestadores" },
+              { name: "Jardinagem", icon: "🌱", count: "98 prestadores" },
+              { name: "Montagem", icon: "🔨", count: "167 prestadores" },
+              { name: "Reformas", icon: "🏠", count: "89 prestadores" },
+              { name: "Informática", icon: "💻", count: "123 prestadores" },
             ].map((category, index) => (
               <Link key={index} href={`/servicos?categoria=${category.name}`}>
                 <Card className="hover:shadow-md transition-shadow cursor-pointer">
                   <CardContent className="p-4 text-center">
                     <div className="text-3xl mb-2">{category.icon}</div>
-                    <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                    <h3 className="font-semibold text-gray-900">
+                      {category.name}
+                    </h3>
                     <p className="text-sm text-gray-600">{category.count}</p>
                   </CardContent>
                 </Card>
               </Link>
             ))}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="bg-white rounded-lg p-8 shadow-sm mb-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-3xl font-bold text-blue-600 mb-2">1,234</div>
-              <div className="text-gray-600">Prestadores Ativos</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-green-600 mb-2">5,678</div>
-              <div className="text-gray-600">Serviços Concluídos</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">4.8</div>
-              <div className="text-gray-600">Avaliação Média</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-yellow-600 mb-2">98%</div>
-              <div className="text-gray-600">Satisfação dos Clientes</div>
-            </div>
           </div>
         </div>
 
@@ -137,7 +137,8 @@ export default function VisitorDashboard() {
             Pronto para Começar?
           </h2>
           <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-            Junte-se a milhares de pessoas que já encontraram os melhores profissionais através da nossa plataforma
+            Junte-se a milhares de pessoas que já encontraram os melhores
+            profissionais através da nossa plataforma
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/cadastro">
@@ -155,5 +156,5 @@ export default function VisitorDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }

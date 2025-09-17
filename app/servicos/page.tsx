@@ -126,28 +126,28 @@ export default function ServicosPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header de busca melhorado */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">Descubra Serviços Incríveis</h1>
-            <p className="text-lg opacity-90">Encontre o profissional perfeito para suas necessidades</p>
+        <div className="max-w-7xl mx-auto p-4 sm:p-6">
+          <div className="text-center mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Descubra Serviços Incríveis</h1>
+            <p className="text-base sm:text-lg opacity-90">Encontre o profissional perfeito para suas necessidades</p>
           </div>
           
-          <div className="flex flex-col lg:flex-row gap-4 max-w-4xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-4xl mx-auto">
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
               <Input
-                placeholder="Ex: limpeza, pintura, aulas de inglês..."
+                placeholder="Ex: limpeza, pintura, aulas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 text-lg bg-white/95 border-0 shadow-lg"
+                className="pl-10 sm:pl-12 h-12 text-base sm:text-lg bg-white/95 border-0 shadow-lg"
               />
             </div>
             <Button
               size="lg"
-              className="bg-white text-blue-600 hover:bg-gray-100 px-8 h-12 font-semibold"
+              className="bg-white text-blue-600 hover:bg-gray-100 px-6 sm:px-8 h-12 font-semibold w-full sm:w-auto min-h-[48px] active:bg-gray-200"
               onClick={() => setSearchTerm(searchTerm)}
             >
-              <Search className="h-5 w-5 mr-2" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Buscar
             </Button>
           </div>
@@ -155,18 +155,18 @@ export default function ServicosPage() {
       </div>
       
       {/* Filtros aprimorados */}
-      <div className="bg-white border-b shadow-sm sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto p-4">
+      <div className="bg-white border-b shadow-sm sticky top-14 sm:top-16 z-40">
+        <div className="max-w-7xl mx-auto p-3 sm:p-4">
 
           <div className="flex flex-col md:flex-row gap-4">
             {/* Categorias rápidas */}
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <Filter className="h-4 w-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">Filtros Rápidos</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {['limpeza', 'reparos', 'pintura', 'técnico', 'beleza', 'educação'].map((cat) => (
+                {['limpeza', 'reparos', 'pintura', 'tecnico', 'beleza', 'educacao'].map((cat) => (
                   <Button
                     key={cat}
                     variant={selectedCategory === cat ? "default" : "outline"}
@@ -225,7 +225,7 @@ export default function ServicosPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto p-3 sm:p-4">
         {showMap ? (
           <div className="h-[600px] rounded-lg overflow-hidden">
             <InteractiveMap providers={filteredProviders} />
@@ -233,10 +233,10 @@ export default function ServicosPage() {
         ) : (
           <div className="space-y-6">
             {/* Resultados com estatísticas */}
-            <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm mb-4 sm:mb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                     {filteredProviders.length} {filteredProviders.length === 1 ? 'prestador encontrado' : 'prestadores encontrados'}
                   </h2>
                   <p className="text-gray-600 mt-1">
@@ -266,14 +266,14 @@ export default function ServicosPage() {
                 <p className="text-gray-600">Tente ajustar os filtros ou buscar por outros termos.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filteredProviders.slice(0, 8).map((provider) => (
                   <Card key={provider.id} className="hover:shadow-lg transition-shadow cursor-pointer group">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-start gap-4">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-start justify-between mb-3 sm:mb-4">
+                        <div className="flex items-start gap-3 sm:gap-4">
                           <div className="relative">
-                            <Avatar className="h-16 w-16">
+                            <Avatar className="h-12 w-12 sm:h-16 sm:w-16">
                               <AvatarImage src={provider.users.avatar_url || undefined} />
                               <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
                                 {getInitials(provider.users.name)}
@@ -353,14 +353,14 @@ export default function ServicosPage() {
 
                         <Separator />
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 sm:gap-3">
                           {isAuthenticated ? (
                             <>
-                              <Button size="sm" className="flex-1">
+                              <Button size="sm" className="flex-1 h-10 sm:h-8 min-h-[40px] sm:min-h-[32px]">
                                 <MessageCircle className="h-4 w-4 mr-2" />
                                 Conversar
                               </Button>
-                              <Button size="sm" variant="outline" className="flex-1 bg-transparent">
+                              <Button size="sm" variant="outline" className="flex-1 bg-transparent h-10 sm:h-8 min-h-[40px] sm:min-h-[32px]">
                                 <Calendar className="h-4 w-4 mr-2" />
                                 Contratar
                               </Button>
