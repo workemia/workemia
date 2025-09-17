@@ -176,7 +176,7 @@ export function Footer() {
               </li>
             </ul>
 
-            <div>
+            {/* <div>
               <h5 className="font-semibold mb-3">Newsletter</h5>
               <p className="text-sm text-gray-400 mb-3">Receba atualizações sobre novos serviços e promoções</p>
               <div className="flex">
@@ -185,7 +185,7 @@ export function Footer() {
                   <i className="fas fa-envelope"></i>
                 </Button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
