@@ -37,7 +37,7 @@ jobs:
     if: github.event.workflow_run.name == 'CI/CD Pipeline'
     steps:
       - name: Update deployment status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: deployments } = await github.rest.repos.listDeployments({
