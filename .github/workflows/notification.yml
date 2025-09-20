@@ -12,7 +12,7 @@ jobs:
     steps:      
       - name: Email notification on failure
         if: github.event.workflow_run.conclusion == 'failure'
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v6
         with:
           server_address: smtp.gmail.com
           server_port: 587
