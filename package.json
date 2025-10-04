@@ -94,7 +94,7 @@
     "eslint-config-next": "15.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-security": "^2.1.0",
-    "eslint-plugin-sonarjs": "^0.23.0",
+    "eslint-plugin-sonarjs": "^3.0.5",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
     "@lhci/cli": "^0.12.0",
