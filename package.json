@@ -113,7 +113,7 @@
 >>>>>>> Stashed changes
     "eslint": "^8.56.0",
     "eslint-config-next": "15.0.3",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-security": "^2.1.0",
 <<<<<<< Updated upstream
     "eslint-plugin-sonarjs": "^0.23.0",
