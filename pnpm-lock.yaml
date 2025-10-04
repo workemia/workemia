@@ -106,6 +106,7 @@ importers:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         version: 2.56.0
       '@vercel/analytics':
         specifier: latest
@@ -121,6 +122,9 @@ importers:
 =======
         version: 2.58.0
 >>>>>>> ec47e36 (chore(deps-dev): bump eslint-plugin-sonarjs from 0.23.0 to 3.0.5)
+=======
+        version: 2.58.0
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
       '@vercel/analytics':
         specifier: latest
         version: 1.5.0(@remix-run/react@2.17.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.0.2))(@sveltejs/kit@2.36.1(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.2)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.2)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(next@15.2.4(@babel/core@7.28.4)(@playwright/test@1.55.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)(svelte@5.38.2)(vue-router@4.5.1(vue@3.5.19(typescript@5.0.2)))(vue@3.5.19(typescript@5.0.2))
@@ -200,8 +204,8 @@ importers:
 =======
 >>>>>>> adc70b5 (chore(deps): bump lucide-react from 0.454.0 to 0.544.0)
       tailwind-merge:
-        specifier: ^2.5.5
-        version: 2.5.5
+        specifier: ^3.3.1
+        version: 3.3.1
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.17)
@@ -1897,6 +1901,7 @@ packages:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
@@ -1913,6 +1918,10 @@ packages:
   '@rollup/rollup-win32-x64-msvc@4.52.4':
     resolution: {integrity: sha512-bf9PtUa0u8IXDVxzRToFQKsNCRz9qLYfR/MpECxl4mRoWYjAeFjgxj1XdZr2M/GNVpT05p+LgQOHopYDlUu6/w==}
 >>>>>>> ec47e36 (chore(deps-dev): bump eslint-plugin-sonarjs from 0.23.0 to 3.0.5)
+=======
+  '@rollup/rollup-win32-x64-msvc@4.52.4':
+    resolution: {integrity: sha512-bf9PtUa0u8IXDVxzRToFQKsNCRz9qLYfR/MpECxl4mRoWYjAeFjgxj1XdZr2M/GNVpT05p+LgQOHopYDlUu6/w==}
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
     cpu: [x64]
     os: [win32]
 
@@ -1964,6 +1973,7 @@ packages:
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< Updated upstream
   '@supabase/auth-js@2.71.1':
     resolution: {integrity: sha512-mMIQHBRc+SKpZFRB2qtupuzulaUhFYupNyxqDj5Jp/LyPvcWvjaJzZzObv6URtL/O6lPxkanASnotGtNpS3H2Q==}
@@ -1985,6 +1995,11 @@ packages:
     resolution: {integrity: sha512-4+bnUrtTDK1YD0/FCx2YtMiQH5FGu9Jlf4IQi5kcqRwRwqp2ey39V61nHNdH86jm3DIzz0aZKiWfTW8qXk1swQ==}
 
 >>>>>>> ec47e36 (chore(deps-dev): bump eslint-plugin-sonarjs from 0.23.0 to 3.0.5)
+=======
+  '@supabase/auth-js@2.72.0':
+    resolution: {integrity: sha512-4+bnUrtTDK1YD0/FCx2YtMiQH5FGu9Jlf4IQi5kcqRwRwqp2ey39V61nHNdH86jm3DIzz0aZKiWfTW8qXk1swQ==}
+
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
   '@supabase/functions-js@2.5.0':
     resolution: {integrity: sha512-SXBx6Jvp+MOBekeKFu+G11YLYPeVeGQl23eYyAG9+Ro0pQ1aIP0UZNIBxHKNHqxzR0L0n6gysNr2KT3841NATw==}
 
@@ -5090,6 +5105,7 @@ packages:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   react-day-picker@9.9.0:
     resolution: {integrity: sha512-NtkJbuX6cl/VaGNb3sVVhmMA6LSMnL5G3xNL+61IyoZj0mUZFWTg4hmj7PHjIQ8MXN9dHWhUHFoJWG6y60DKSg==}
 =======
@@ -5104,6 +5120,10 @@ packages:
   react-day-picker@9.11.0:
     resolution: {integrity: sha512-L4FYOaPrr3+AEROeP6IG2mCORZZfxJDkJI2df8mv1jyPrNYeccgmFPZDaHyAuPCBCddQFozkxbikj2NhMEYfDQ==}
 >>>>>>> ec47e36 (chore(deps-dev): bump eslint-plugin-sonarjs from 0.23.0 to 3.0.5)
+=======
+  react-day-picker@9.11.0:
+    resolution: {integrity: sha512-L4FYOaPrr3+AEROeP6IG2mCORZZfxJDkJI2df8mv1jyPrNYeccgmFPZDaHyAuPCBCddQFozkxbikj2NhMEYfDQ==}
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
     engines: {node: '>=18'}
     peerDependencies:
       react: '>=16.8.0'
@@ -5341,6 +5361,7 @@ packages:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   rollup@4.46.2:
     resolution: {integrity: sha512-WMmLFI+Boh6xbop+OAGo9cQ3OgX9MIg7xOQjn+pTCwOkk+FNDAeAemXkJ3HzDJrVXleLOFVa1ipuc1AmEx1Dwg==}
 =======
@@ -5355,6 +5376,10 @@ packages:
   rollup@4.52.4:
     resolution: {integrity: sha512-CLEVl+MnPAiKh5pl4dEWSyMTpuflgNQiLGhMv8ezD5W/qP8AKvmYpCOKRRNOh7oRKnauBZ4SyeYkMS+1VSyKwQ==}
 >>>>>>> ec47e36 (chore(deps-dev): bump eslint-plugin-sonarjs from 0.23.0 to 3.0.5)
+=======
+  rollup@4.52.4:
+    resolution: {integrity: sha512-CLEVl+MnPAiKh5pl4dEWSyMTpuflgNQiLGhMv8ezD5W/qP8AKvmYpCOKRRNOh7oRKnauBZ4SyeYkMS+1VSyKwQ==}
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
@@ -5695,8 +5720,8 @@ packages:
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
 
-  tailwind-merge@2.5.5:
-    resolution: {integrity: sha512-0LXunzzAZzo0tEPxV3I297ffKZPlKDrjj7NXphC8V5ak9yHC5zRmxnOe2m/Rd/7ivsOMJe3JZ2JVocoDdQTRBA==}
+  tailwind-merge@3.3.1:
+    resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
 
   tailwindcss-animate@1.0.7:
     resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
@@ -6681,6 +6706,7 @@ snapshots:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   '@hookform/resolvers@3.9.1(react-hook-form@7.62.0(react@19.0.0))':
     dependencies:
       react-hook-form: 7.62.0(react@19.0.0)
@@ -6694,6 +6720,10 @@ snapshots:
   '@hookform/resolvers@3.9.1(react-hook-form@7.64.0(react@19.0.0))':
     dependencies:
 >>>>>>> ec47e36 (chore(deps-dev): bump eslint-plugin-sonarjs from 0.23.0 to 3.0.5)
+=======
+  '@hookform/resolvers@3.9.1(react-hook-form@7.64.0(react@19.0.0))':
+    dependencies:
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
       react-hook-form: 7.64.0(react@19.0.0)
 
   '@humanwhocodes/config-array@0.13.0':
@@ -7864,6 +7894,7 @@ snapshots:
     optional: true
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   '@rollup/rollup-android-arm-eabi@4.46.2':
 =======
 >>>>>>> adc70b5 (chore(deps): bump lucide-react from 0.454.0 to 0.544.0)
@@ -8001,6 +8032,71 @@ snapshots:
   '@rollup/rollup-win32-x64-gnu@4.52.4':
     optional: true
 
+=======
+  '@rollup/rollup-android-arm-eabi@4.52.4':
+    optional: true
+
+  '@rollup/rollup-android-arm64@4.52.4':
+    optional: true
+
+  '@rollup/rollup-darwin-arm64@4.52.4':
+    optional: true
+
+  '@rollup/rollup-darwin-x64@4.52.4':
+    optional: true
+
+  '@rollup/rollup-freebsd-arm64@4.52.4':
+    optional: true
+
+  '@rollup/rollup-freebsd-x64@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-arm-gnueabihf@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-arm-musleabihf@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-arm64-gnu@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-arm64-musl@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-loong64-gnu@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-ppc64-gnu@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-riscv64-gnu@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-riscv64-musl@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-s390x-gnu@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-x64-gnu@4.52.4':
+    optional: true
+
+  '@rollup/rollup-linux-x64-musl@4.52.4':
+    optional: true
+
+  '@rollup/rollup-openharmony-arm64@4.52.4':
+    optional: true
+
+  '@rollup/rollup-win32-arm64-msvc@4.52.4':
+    optional: true
+
+  '@rollup/rollup-win32-ia32-msvc@4.52.4':
+    optional: true
+
+  '@rollup/rollup-win32-x64-gnu@4.52.4':
+    optional: true
+
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
   '@rollup/rollup-win32-x64-msvc@4.52.4':
     optional: true
 
@@ -8065,6 +8161,7 @@ snapshots:
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< Updated upstream
   '@supabase/auth-js@2.71.1':
 =======
@@ -8078,6 +8175,9 @@ snapshots:
 =======
   '@supabase/auth-js@2.72.0':
 >>>>>>> ec47e36 (chore(deps-dev): bump eslint-plugin-sonarjs from 0.23.0 to 3.0.5)
+=======
+  '@supabase/auth-js@2.72.0':
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
     dependencies:
       '@supabase/node-fetch': 2.6.15
 
@@ -11914,6 +12014,7 @@ snapshots:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   react-day-picker@9.9.0(react@19.0.0):
 =======
   react-day-picker@9.10.0(react@19.0.0):
@@ -11924,6 +12025,9 @@ snapshots:
 =======
   react-day-picker@9.11.0(react@19.0.0):
 >>>>>>> ec47e36 (chore(deps-dev): bump eslint-plugin-sonarjs from 0.23.0 to 3.0.5)
+=======
+  react-day-picker@9.11.0(react@19.0.0):
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
     dependencies:
       '@date-fns/tz': 1.4.1
       date-fns: 4.1.0
@@ -12170,6 +12274,7 @@ snapshots:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   rollup@4.46.2:
 =======
   rollup@4.52.0:
@@ -12180,6 +12285,9 @@ snapshots:
 =======
   rollup@4.52.4:
 >>>>>>> ec47e36 (chore(deps-dev): bump eslint-plugin-sonarjs from 0.23.0 to 3.0.5)
+=======
+  rollup@4.52.4:
+>>>>>>> 3fb2bd8 (chore(deps): bump tailwind-merge from 2.6.0 to 3.3.1)
     dependencies:
       '@types/estree': 1.0.8
     optionalDependencies:
@@ -12703,7 +12811,7 @@ snapshots:
 
   symbol-tree@3.2.4: {}
 
-  tailwind-merge@2.5.5: {}
+  tailwind-merge@3.3.1: {}
 
   tailwindcss-animate@1.0.7(tailwindcss@3.4.17):
     dependencies:
