@@ -38,6 +38,7 @@ export function useCalendarEvents(providerId?: string) {
 
   const addEvent = async (event: Omit<CalendarEvent, "id" | "created_at">) => {
     try {
+      // @ts-ignore - Database types need regeneration
       const { data, error } = await supabase.from("calendar_events").insert([event]).select().single()
 
       if (error) throw error
@@ -52,6 +53,7 @@ export function useCalendarEvents(providerId?: string) {
 
   const updateEvent = async (id: string, updates: Partial<CalendarEvent>) => {
     try {
+      // @ts-ignore - Database types need regeneration
       const { data, error } = await supabase.from("calendar_events").update(updates).eq("id", id).select().single()
 
       if (error) throw error
