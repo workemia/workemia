@@ -10,6 +10,7 @@ export async function updateSession(request: NextRequest) {
 
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
+  // Next.js mapeia ENV_NEXT_PUBLIC_* para NEXT_PUBLIC_* via next.config.mjs
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -42,34 +43,55 @@ export async function updateSession(request: NextRequest) {
   // Definir rotas públicas que não precisam de autenticação
   const publicRoutes = [
     "/",
-    "/login", 
+    "/login",
     "/cadastro",
     "/auth",
     "/como-funciona",
     "/servicos",
     "/seja-prestador",
-    "/dashboard/visitor"
+    "/dashboard/visitor",
+    "/admin/login" // Login administrativo é público
   ]
 
-  const isPublicRoute = publicRoutes.some(route => 
+  const isPublicRoute = publicRoutes.some(route =>
     request.nextUrl.pathname.startsWith(route)
   )
 
-  // Se não há usuário e a rota não é pública, redirecionar para login
+  // Se não há usuário e a rota não é pública, redirecionar para login apropriado
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = "/login"
+    // Rotas /admin/* redirecionam para /admin/login
+    // Outras rotas redirecionam para /login público
+    url.pathname = request.nextUrl.pathname.startsWith('/admin') ? '/admin/login' : '/login'
     return NextResponse.redirect(url)
   }
 
   // Se há usuário, verificar permissões baseadas em role
   if (user) {
-    const userRole = getUserRole(user)
+    // IMPORTANTE: Buscar role do banco de dados (fonte da verdade)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    // Determinar role: prioridade para banco, fallback para função getUserRole
+    const userRole = profile?.role ? (profile.role as UserRole) : getUserRole(user)
     const pathname = request.nextUrl.pathname
 
-    // Verificar acesso baseado em role
+    // PROTEÇÃO ESPECIAL: Rotas /admin/* só para admin e employee
+    if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+      if (userRole !== 'admin' && userRole !== 'employee') {
+        const url = request.nextUrl.clone()
+        // Redirecionar usuários não-admin para seus dashboards
+        url.pathname = getDashboardRoute(userRole)
+        return NextResponse.redirect(url)
+      }
+    }
+
+    // Verificar acesso baseado em role para dashboards
     const accessDenied = checkRoleAccess(pathname, userRole)
-    
+
     if (accessDenied) {
       const url = request.nextUrl.clone()
       url.pathname = getDashboardRoute(userRole)
@@ -103,7 +125,7 @@ function getUserRole(user: any): UserRole {
 
 // Função para verificar acesso baseado em role
 function checkRoleAccess(pathname: string, userRole: UserRole): boolean {
-  // Rotas protegidas por role
+  // Rotas protegidas por role - cada usuário só pode acessar SEU dashboard
   const roleRoutes = {
     admin: ['/dashboard/admin'],
     employee: ['/dashboard/employee'],
@@ -115,18 +137,10 @@ function checkRoleAccess(pathname: string, userRole: UserRole): boolean {
   // Verificar se a rota requer um role específico
   for (const [requiredRole, routes] of Object.entries(roleRoutes)) {
     if (routes.some(route => pathname.startsWith(route))) {
-      // Se a rota requer um role específico, verificar se o usuário tem acesso
-      if (requiredRole === 'admin' && userRole !== 'admin') {
-        return true // acesso negado
-      }
-      if (requiredRole === 'employee' && !['admin', 'employee'].includes(userRole)) {
-        return true // acesso negado
-      }
-      if (requiredRole === 'provider' && !['admin', 'employee', 'provider'].includes(userRole)) {
-        return true // acesso negado
-      }
-      if (requiredRole === 'client' && !['admin', 'employee', 'provider', 'client'].includes(userRole)) {
-        return true // acesso negado
+      // IMPORTANTE: Cada role só pode acessar o SEU próprio dashboard
+      // Admin não pode acessar dashboards de cliente/prestador
+      if (userRole !== requiredRole) {
+        return true // acesso negado - usuário tentando acessar dashboard de outro role
       }
     }
   }

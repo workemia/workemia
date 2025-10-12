@@ -6,7 +6,7 @@ test.describe('Homepage E2E Tests', () => {
   })
 
   test('should load homepage successfully', async ({ page }) => {
-    await expect(page).toHaveTitle(/ServiceHub|Service Workee/)
+    await expect(page).toHaveTitle(/Workemia|Workemia/)
     await expect(page.getByText('Encontre o serviço perfeito perto de você')).toBeVisible()
   })
 

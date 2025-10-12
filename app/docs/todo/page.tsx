@@ -77,11 +77,11 @@ function TaskSection({
 export default function TodoPage() {
   return (
     <>
-      <DocsH1>ServiceHub - Lista de Tarefas Completa</DocsH1>
+      <DocsH1>Workemia - Lista de Tarefas Completa</DocsH1>
       
       <DocsH2>🎯 Visão Geral</DocsH2>
       <DocsP>
-        ServiceHub é uma plataforma de marketplace de serviços que conecta clientes a prestadores. Esta lista organiza as tarefas necessárias para tornar a plataforma completamente funcional.
+        Workemia é uma plataforma de marketplace de serviços que conecta clientes a prestadores. Esta lista organiza as tarefas necessárias para tornar a plataforma completamente funcional.
       </DocsP>
 
       <DocsHR />

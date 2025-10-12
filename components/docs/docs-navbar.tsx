@@ -47,7 +47,7 @@ export function DocsNavbar() {
         <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              📚 Documentação Service Workee
+              📚 Documentação Workemia
             </h1>
             <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full font-medium">
               Somente Admins

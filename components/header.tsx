@@ -35,36 +35,6 @@ import { useAuth } from "@/hooks/use-auth"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useScrollToSection } from "@/hooks/use-scroll"
 
-// Funções auxiliares para navegação baseada em role
-function getDashboardLink(role?: string): string {
-  switch (role) {
-    case 'admin':
-      return '/dashboard/admin'
-    case 'employee':
-      return '/dashboard/employee'
-    case 'provider':
-      return '/dashboard/prestador'
-    case 'client':
-      return '/dashboard/cliente'
-    default:
-      return '/dashboard/visitor'
-  }
-}
-
-function getServicesLink(role?: string): string {
-  switch (role) {
-    case 'admin':
-    case 'employee':
-      return '/dashboard/admin?tab=services'
-    case 'provider':
-      return '/dashboard/prestador?tab=services'
-    case 'client':
-      return '/dashboard/cliente?tab=services'
-    default:
-      return '/servicos'
-  }
-}
-
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { user, loading, logout } = useAuth()
@@ -97,14 +67,39 @@ export function Header() {
     setIsMenuOpen(!isMenuOpen)
   }
 
+  // Função para obter o link correto do dashboard baseado no role do usuário
   const getDashboardLink = () => {
     if (!user) return "/login"
-    return (user.role === "client") ? "/dashboard/cliente" : "/dashboard/prestador"
+
+    switch (user.role) {
+      case 'admin':
+        return '/dashboard/admin'
+      case 'employee':
+        return '/dashboard/employee'
+      case 'provider':
+        return '/dashboard/prestador'
+      case 'client':
+        return '/dashboard/cliente'
+      default:
+        return '/dashboard/visitor'
+    }
   }
 
+  // Função para obter o link correto de serviços baseado no role do usuário
   const getServicesLink = () => {
     if (!user) return "/servicos"
-    return (user.role === "client") ? "/servicos" : "/dashboard/prestador?tab=requests"
+
+    switch (user.role) {
+      case 'admin':
+      case 'employee':
+        return '/dashboard/admin'
+      case 'provider':
+        return '/dashboard/prestador?tab=opportunities'
+      case 'client':
+        return '/dashboard/cliente?tab=active'
+      default:
+        return '/servicos'
+    }
   }
 
   // Loading state
@@ -115,7 +110,7 @@ export function Header() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
-                Service Workee
+                Workemia
               </Link>
             </div>
             <div className="flex items-center space-x-4">
@@ -134,8 +129,8 @@ export function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="text-lg sm:text-2xl font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-              <span className="hidden sm:inline">Service Workee</span>
-              <span className="sm:hidden">SW</span>
+              <span className="hidden sm:inline">Workemia</span>
+              <span className="sm:hidden">WM</span>
             </Link>
           </div>
 

@@ -13,7 +13,7 @@
 -- 5. Password: [defina uma senha segura]
 -- 6. User Metadata:
 --    {
---      "full_name": "Administrador ServiceHub",
+--      "full_name": "Administrador Workemia",
 --      "user_type": "admin"
 --    }
 
@@ -51,17 +51,17 @@
 -- 4. Clique em "Add user" (ou "Invite user")
 -- 5. Preencha:
 --    - Email: admin@servicehub.com
---    - Password: [use uma senha forte, ex: Admin@ServiceHub2025!]
+--    - Password: [use uma senha forte, ex: Admin@Workemia2025!]
 --    - Auto Confirm User: ✅ (marcado)
 -- 6. Após criar, clique no usuário para editar
 -- 7. Na seção "User Metadata", adicione:
 --    {
---      "full_name": "Administrador ServiceHub",
+--      "full_name": "Administrador Workemia",
 --      "user_type": "admin"
 --    }
 -- 8. Salve as alterações
 --
 -- SENHA SUGERIDA (use uma mais segura em produção):
--- Admin@ServiceHub2025!
+-- Admin@Workemia2025!
 --
 -- Após criar, teste o login em: http://localhost:3000/login

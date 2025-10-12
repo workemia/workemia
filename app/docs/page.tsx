@@ -8,7 +8,7 @@ import {
 export default function DocsPage() {
   return (
     <>
-      <DocsH1>🏗️ ServiceHub - Documentação Oficial</DocsH1>
+      <DocsH1>🏗️ Workemia - Documentação Oficial</DocsH1>
       
       <DocsP>
         <DocsStrong>
@@ -42,7 +42,7 @@ export default function DocsPage() {
       <DocsH2>📋 <DocsStrong>Visão Geral</DocsStrong></DocsH2>
       
       <DocsP>
-        ServiceHub é uma aplicação completa de marketplace que permite a <DocsStrong>clientes solicitarem serviços</DocsStrong> e <DocsStrong>prestadores oferecerem seus trabalhos</DocsStrong> de forma organizada, segura e eficiente. A plataforma oferece um ecossistema completo para gestão de serviços locais.
+        Workemia é uma aplicação completa de marketplace que permite a <DocsStrong>clientes solicitarem serviços</DocsStrong> e <DocsStrong>prestadores oferecerem seus trabalhos</DocsStrong> de forma organizada, segura e eficiente. A plataforma oferece um ecossistema completo para gestão de serviços locais.
       </DocsP>
 
       <DocsH3>✨ <DocsStrong>Funcionalidades Principais</DocsStrong></DocsH3>
@@ -189,7 +189,7 @@ types/                  # Definições TypeScript
       <div className="text-center">
         <DocsP>
           <DocsStrong>
-            🌟 ServiceHub - Conectando pessoas através de serviços de qualidade
+            🌟 Workemia - Conectando pessoas através de serviços de qualidade
           </DocsStrong>
         </DocsP>
       </div>

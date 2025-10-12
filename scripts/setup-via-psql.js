@@ -6,7 +6,7 @@ const DB_HOST = 'aws-0-us-east-1.pooler.supabase.com'
 const DB_PORT = '6543'
 const DB_NAME = 'postgres'
 const DB_USER = 'postgres.yxlxreavyojyczqxekjj'
-const DB_PASSWORD = 'ServiceHub2024@'
+const DB_PASSWORD = 'Workemia2024@'
 
 async function setupDatabase() {
   console.log('🚀 Tentando conectar diretamente ao PostgreSQL...')

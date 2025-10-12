@@ -16,7 +16,7 @@ export default function ComoFuncionaPage() {
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 py-16 md:py-24 text-white">
           <div className="max-w-4xl mx-auto text-center px-4">
-            <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">Como Funciona o ServiceHub</h1>
+            <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">Como Funciona o Workemia</h1>
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed opacity-90">
               Conectar você aos melhores prestadores de serviços é simples e rápido. Veja como funciona nosso processo
               em 4 etapas.
@@ -194,7 +194,7 @@ export default function ComoFuncionaPage() {
         <section className="py-16 bg-gray-50">
           <div className="max-w-6xl mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Por que escolher o ServiceHub?</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Por que escolher o Workemia?</h2>
               <p className="text-lg md:text-xl text-gray-600">Vantagens que fazem a diferença na sua experiência</p>
             </div>
 

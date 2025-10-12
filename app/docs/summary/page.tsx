@@ -50,7 +50,7 @@ function ImplementationSection({
 export default function SummaryPage() {
   return (
     <>
-      <DocsH1>Workee Service - Resumo de Implementações</DocsH1>
+      <DocsH1>Workemia Service - Resumo de Implementações</DocsH1>
 
       <DocsP>
         <DocsStrong>Data</DocsStrong>: 06 de Setembro de 2025
@@ -68,7 +68,7 @@ export default function SummaryPage() {
         Esta sessão de desenvolvimento focou em{" "}
         <DocsStrong>correções críticas</DocsStrong>,{" "}
         <DocsStrong>melhorias de autenticação</DocsStrong> e{" "}
-        <DocsStrong>eliminação de redundâncias</DocsStrong> no Workee Service,
+        <DocsStrong>eliminação de redundâncias</DocsStrong> no Workemia Service,
         resultando em uma aplicação mais robusta e organizada.
       </DocsP>
 
@@ -476,7 +476,7 @@ lib/
       <div className="text-center text-lg">
         <DocsP>
           <DocsStrong>
-            ✨ A base do Workee Service está agora sólida e pronta para as
+            ✨ A base do Workemia Service está agora sólida e pronta para as
             próximas fases de desenvolvimento!
           </DocsStrong>
         </DocsP>

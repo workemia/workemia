@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "./database.types"
 
+// Next.js mapeia ENV_NEXT_PUBLIC_* para NEXT_PUBLIC_* via next.config.mjs
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
