@@ -72,10 +72,6 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: clientData.email,
         password: clientData.password,
-        options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard/cliente`,
-        },
       })
 
       if (error) {
@@ -139,10 +135,6 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: providerData.email,
         password: providerData.password,
-        options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard/prestador`,
-        },
       })
 
       if (error) {

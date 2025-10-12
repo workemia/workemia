@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    // Validar variáveis de ambiente
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database configuration missing'
+      }, { status: 503 })
+    }
+
+    // Criar cliente apenas quando necessário
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
     // Testar conexão básica
     console.log('Testando conexão com Supabase...')
     

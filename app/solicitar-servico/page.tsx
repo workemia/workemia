@@ -80,7 +80,7 @@ export default function SolicitarServicoPage() {
       
       const { error } = await supabase
         .from('services')
-        .insert(serviceData)
+        .insert(serviceData as any)
       
       if (error) {
         console.error('Erro detalhado do Supabase:', {
