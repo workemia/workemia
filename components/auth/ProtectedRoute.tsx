@@ -19,7 +19,7 @@ export function ProtectedRoute({
   requiredPermission,
   fallbackRoute = '/login',
   loadingComponent
-}: ProtectedRouteProps) {
+}: ProtectedRouteProps): React.ReactElement {
   const router = useRouter()
   const { user, hasRole, hasPermission, canAccess } = usePermissions()
   const { loading } = require('@/hooks/use-auth').useAuth()
@@ -66,14 +66,14 @@ export function ProtectedRoute({
 
   // Se está carregando ou não há usuário ainda, mostrar loading
   if (loading || !user) {
-    return loadingComponent || (
+    return (loadingComponent || (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600">Verificando acesso...</p>
         </div>
       </div>
-    )
+    )) as React.ReactElement
   }
 
   // Se não tem acesso, não mostrar nada (redirecionamento já foi feito)
@@ -89,8 +89,8 @@ export function withAuth<P extends object>(
   Component: React.ComponentType<P>,
   requiredRole?: UserRole,
   requiredPermission?: keyof UserPermissions
-) {
-  return function AuthenticatedComponent(props: P) {
+): React.FC<P> {
+  return function AuthenticatedComponent(props: P): React.ReactElement {
     return (
       <ProtectedRoute 
         requiredRole={requiredRole}

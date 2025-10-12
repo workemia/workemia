@@ -1,8 +1,8 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "pnpm run build",
   "outputDirectory": ".next",
-  "installCommand": "npm ci --legacy-peer-deps",
-  "devCommand": "npm run dev",
+  "installCommand": "pnpm install --frozen-lockfile=false",
+  "devCommand": "pnpm run dev",
   "framework": "nextjs",
   "regions": ["gru1"],
   "functions": {

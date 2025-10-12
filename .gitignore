@@ -31,5 +31,7 @@ next-env.d.ts
 *.md
 *.sql
 # Package manager locks (usar apenas npm)
-pnpm-lock.yaml
+
+# Use npm lock (ignore yarn)
 yarn.lock
+package-lock.json

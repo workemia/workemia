@@ -1,8 +1,8 @@
 # Vercel ignore - arquivos que não devem ser enviados
 
 # Lock files de outros gerenciadores
-pnpm-lock.yaml
 yarn.lock
+package-lock.json
 
 # Build artifacts
 .next/
