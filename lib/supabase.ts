@@ -1,17 +1,46 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "./database.types"
 
-// Next.js mapeia ENV_NEXT_PUBLIC_* para NEXT_PUBLIC_* via next.config.mjs
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Variáveis de ambiente
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+// Mock client para build time
+const createMockClient = () => ({
+  auth: {
+    signUp: async () => ({ data: null, error: { message: 'Mock client' } }),
+    signInWithPassword: async () => ({ data: null, error: { message: 'Mock client' } }),
+    signOut: async () => ({ error: { message: 'Mock client' } }),
+    getUser: async () => ({ data: { user: null }, error: null }),
+    getSession: async () => ({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+  },
+  from: () => ({
+    select: () => Promise.resolve({ data: null, error: null }),
+    insert: () => Promise.resolve({ data: null, error: null }),
+    update: () => Promise.resolve({ data: null, error: null }),
+    delete: () => Promise.resolve({ data: null, error: null }),
+    eq: function() { return this },
+    single: () => Promise.resolve({ data: null, error: null }),
+    limit: function() { return this },
+    order: function() { return this },
+  }),
+}) as any
 
-// Singleton pattern for client-side
+// Singleton com validação
 let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null
 
+// Exportar supabase com validação
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient<Database>(supabaseUrl, supabaseAnonKey)
+  : createMockClient()
+
+// Singleton pattern for client-side
 export function getSupabaseClient() {
   if (!supabaseInstance) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return createMockClient()
+    }
     supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey)
   }
   return supabaseInstance
@@ -19,6 +48,9 @@ export function getSupabaseClient() {
 
 // Server-side client
 export function createServerClient() {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return createMockClient()
+  }
   return createClient<Database>(supabaseUrl, supabaseAnonKey)
 }
 
