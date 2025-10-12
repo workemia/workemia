@@ -79,14 +79,15 @@ export default function CadastroPage() {
       })
 
       if (error) {
+        console.error('Erro do Supabase:', error)
         // Tratamento específico de erros
         if (error.message.includes('User already registered')) {
           throw new Error('Este e-mail já está cadastrado. Tente fazer login.')
         }
         if (error.message.includes('Database error')) {
-          throw new Error('Erro interno do servidor. Tente novamente em alguns minutos.')
+          throw new Error(`Erro no banco de dados: ${error.message}`)
         }
-        throw error
+        throw new Error(error.message)
       }
 
       if (data.user) {
