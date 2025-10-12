@@ -1,8 +1,26 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 export async function GET() {
   try {
+    // Validar variáveis de ambiente
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        { 
+          status: 'error', 
+          message: 'Database configuration missing',
+          timestamp: new Date().toISOString(),
+        },
+        { status: 503 }
+      )
+    }
+
+    // Criar cliente apenas quando necessário
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
     const { data, error } = await supabase
       .from('users')
       .select('count')
@@ -41,3 +59,6 @@ export async function GET() {
     )
   }
 }
+
+// Marcar como rota dinâmica para evitar execução durante build
+export const dynamic = 'force-dynamic'
