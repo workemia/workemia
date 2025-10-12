@@ -1,4 +1,4 @@
-# ServiceHub - Resumo de Implementações
+# Workemia - Resumo de Implementações
 
 **Data**: 29 de Dezembro de 2024  
 **Status**: 🟢 Implementações concluídas com sucesso
@@ -7,7 +7,7 @@
 
 ## 📋 **Visão Geral das Alterações**
 
-Esta sessão de desenvolvimento focou em **correções críticas**, **melhorias de autenticação** e **eliminação de redundâncias** no ServiceHub, resultando em uma aplicação mais robusta e organizada.
+Esta sessão de desenvolvimento focou em **correções críticas**, **melhorias de autenticação** e **eliminação de redundâncias** no Workemia, resultando em uma aplicação mais robusta e organizada.
 
 ---
 
@@ -264,7 +264,7 @@ Summary.md                     # Este arquivo
 
 ---
 
-**✨ A base do ServiceHub está agora sólida e pronta para as próximas fases de desenvolvimento!**
+**✨ A base do Workemia está agora sólida e pronta para as próximas fases de desenvolvimento!**
 
 ---
 

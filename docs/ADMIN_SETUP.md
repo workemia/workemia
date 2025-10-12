@@ -1,8 +1,8 @@
-# 🔐 Configuração de Administradores - ServiceHub
+# 🔐 Configuração de Administradores - Workemia
 
 ## 📋 **Resumo**
 
-Este documento explica como configurar e gerenciar os usuários administradores do ServiceHub.
+Este documento explica como configurar e gerenciar os usuários administradores do Workemia.
 
 ---
 
@@ -20,7 +20,7 @@ Este documento explica como configurar e gerenciar os usuários administradores 
 ### **1. Criar Usuário no Supabase Dashboard**
 
 1. **Acesse o Supabase Dashboard**: https://supabase.com/dashboard
-2. **Selecione seu projeto** ServiceHub
+2. **Selecione seu projeto** Workemia
 3. **Navegue para**: `Authentication` → `Users`
 4. **Clique em**: `Add user` (ou `Invite user`)
 
@@ -28,7 +28,7 @@ Este documento explica como configurar e gerenciar os usuários administradores 
 
 ```
 📧 Email: admin@servicehub.com
-🔐 Password: Admin@ServiceHub2025! (ou senha mais segura)
+🔐 Password: Admin@Workemia2025! (ou senha mais segura)
 ✅ Auto Confirm User: Marcado
 👤 User Type: admin
 ```
@@ -39,9 +39,9 @@ Após criar o usuário, **edite** e adicione na seção **User Metadata**:
 
 ```json
 {
-  "full_name": "Administrador ServiceHub",
+  "full_name": "Administrador Workemia",
   "user_type": "admin",
-  "display_name": "Admin ServiceHub"
+  "display_name": "Admin Workemia"
 }
 ```
 
