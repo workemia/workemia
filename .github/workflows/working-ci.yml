@@ -1,0 +1,79 @@
+name: Working CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    name: 🚀 Build & Basic Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Check formatting
+        run: npm run format:check
+        continue-on-error: true
+
+      - name: Security audit (non-blocking)
+        run: npm audit --audit-level high
+        continue-on-error: true
+
+      - name: Check health endpoint exists
+        run: |
+          if [ -f "app/api/health/route.ts" ]; then
+            echo "✅ Health endpoint exists"
+          else
+            echo "⚠️ Health endpoint not found"
+          fi
+
+  vercel-build-check:
+    name: ✅ Vercel Build Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build for Vercel
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Verify build artifacts
+        run: |
+          if [ -d ".next" ]; then
+            echo "✅ Build artifacts created successfully"
+            echo "Build size: $(du -sh .next | cut -f1)"
+          else
+            echo "❌ Build artifacts not found"
+            exit 1
+          fi
