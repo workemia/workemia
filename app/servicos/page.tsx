@@ -228,7 +228,7 @@ export default function ServicosPage() {
       <div className="max-w-7xl mx-auto p-3 sm:p-4">
         {showMap ? (
           <div className="h-[600px] rounded-lg overflow-hidden">
-            <InteractiveMap providers={filteredProviders} />
+            <InteractiveMap />
           </div>
         ) : (
           <div className="space-y-6">

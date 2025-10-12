@@ -126,7 +126,7 @@ export default function ProfilePage() {
   }
 
   // Verifica se é prestador
-  const isProvider = user?.type === "provider" || user?.type === "prestador"
+  const isProvider = user?.role === "provider"
 
   if (loading) {
     return (
