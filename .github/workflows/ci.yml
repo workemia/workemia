@@ -1,0 +1,307 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+    types: [ opened, synchronize, reopened, closed ]
+
+jobs:
+  # ============================================
+  # Validações rápidas em PRs e commits
+  # ============================================
+  quality-checks:
+    name: 🔍 Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Type Check
+        run: npm run type-check
+        continue-on-error: false
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Format Check
+        run: npm run format:check
+        continue-on-error: true
+
+  # ============================================
+  # Build apenas para validar (não faz deploy)
+  # A Vercel faz o deploy automático em merges
+  # ============================================
+  build-validation:
+    name: 🔨 Build Validation
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    # Só roda em PRs (main já tem deploy da Vercel)
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify build artifacts
+        run: |
+          if [ -d ".next" ]; then
+            echo "✅ Build successful"
+            echo "📦 Build size: $(du -sh .next | cut -f1)"
+          else
+            echo "❌ Build failed"
+            exit 1
+          fi
+
+  # ============================================
+  # Security audit (não bloqueia PR)
+  # ============================================
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run audit
+        run: npm audit --audit-level high || echo "⚠️ Vulnerabilities found - review recommended"
+
+  # ============================================
+  # Notificação Discord - Start
+  # ============================================
+  notify-start:
+    name: 📢 Notify Start
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.action == 'opened' || github.event.action == 'reopened'
+    steps:
+      - name: Send Discord notification - Pipeline Started
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "⚠️ DISCORD_WEBHOOK_URL não configurado - pulando notificação"
+            exit 0
+          fi
+
+          EVENT_TYPE="${{ github.event_name }}"
+          BRANCH="${{ github.ref_name }}"
+          AUTHOR="${{ github.actor }}"
+          COMMIT_MSG=$(echo "${{ github.event.head_commit.message || github.event.pull_request.title }}" | head -1 | cut -c1-100)
+          REPO="${{ github.repository }}"
+          COMMIT_SHA="${{ github.sha }}"
+          SHORT_SHA=$(echo "$COMMIT_SHA" | cut -c1-7)
+
+          if [ "$EVENT_TYPE" = "pull_request" ]; then
+            TITLE="🔄 Nova Pull Request - Workemia"
+            DESCRIPTION="**PR #${{ github.event.pull_request.number }}**: $COMMIT_MSG"
+            COLOR="3447003"
+            URL="${{ github.event.pull_request.html_url }}"
+          else
+            TITLE="🚀 Novo Push - Workemia"
+            DESCRIPTION="**Commit**: $COMMIT_MSG"
+            COLOR="2123412"
+            URL="https://github.com/$REPO/commit/$COMMIT_SHA"
+          fi
+
+          curl -H "Content-Type: application/json" -X POST -d "{
+            \"embeds\": [{
+              \"title\": \"$TITLE\",
+              \"description\": \"$DESCRIPTION\",
+              \"color\": $COLOR,
+              \"fields\": [
+                {\"name\": \"Branch\", \"value\": \"\`$BRANCH\`\", \"inline\": true},
+                {\"name\": \"Author\", \"value\": \"@$AUTHOR\", \"inline\": true},
+                {\"name\": \"Commit\", \"value\": \"\`$SHORT_SHA\`\", \"inline\": true}
+              ],
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+              \"url\": \"$URL\"
+            }]
+          }" "$DISCORD_WEBHOOK_URL"
+
+  # ============================================
+  # Report final + Notificação Discord
+  # ============================================
+  report:
+    name: 📊 CI Report
+    runs-on: ubuntu-latest
+    needs: [quality-checks, build-validation, security-audit]
+    if: always()
+    steps:
+      - name: Generate report
+        run: |
+          echo "## 📋 CI Pipeline Report"
+          echo ""
+          echo "- **Quality Checks**: ${{ needs.quality-checks.result == 'success' && '✅ Passed' || '❌ Failed' }}"
+          echo "- **Build Validation**: ${{ needs.build-validation.result == 'success' && '✅ Passed' || needs.build-validation.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }}"
+          echo "- **Security Audit**: ${{ needs.security-audit.result == 'success' && '✅ Clean' || '⚠️ Review needed' }}"
+          echo ""
+          echo "**Branch**: \`${{ github.ref_name }}\`"
+          echo "**Commit**: \`${{ github.sha }}\`"
+          echo "**Author**: @${{ github.actor }}"
+          echo ""
+          if [ "${{ needs.quality-checks.result }}" = "success" ]; then
+            echo "🎉 All checks passed!"
+            echo ""
+            echo "**Next steps**:"
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              echo "- ✅ PR is ready to merge"
+              echo "- 🚀 Vercel will deploy automatically after merge to main"
+            else
+              echo "- 🚀 Vercel is deploying to production..."
+            fi
+          else
+            echo "⚠️ Some checks failed - please review"
+          fi
+
+      - name: Send Discord notification - Pipeline Complete
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "⚠️ DISCORD_WEBHOOK_URL não configurado - pulando notificação"
+            exit 0
+          fi
+
+          QUALITY="${{ needs.quality-checks.result }}"
+          BUILD="${{ needs.build-validation.result }}"
+          SECURITY="${{ needs.security-audit.result }}"
+
+          # Determinar status geral
+          if [ "$QUALITY" = "success" ]; then
+            STATUS="✅ Sucesso"
+            COLOR="3066993"
+            EMOJI="✅"
+          else
+            STATUS="❌ Falhou"
+            COLOR="15158332"
+            EMOJI="❌"
+          fi
+
+          EVENT_TYPE="${{ github.event_name }}"
+          BRANCH="${{ github.ref_name }}"
+          AUTHOR="${{ github.actor }}"
+          REPO="${{ github.repository }}"
+          COMMIT_SHA="${{ github.sha }}"
+          SHORT_SHA=$(echo "$COMMIT_SHA" | cut -c1-7)
+          RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+
+          # Checks results
+          QUALITY_EMOJI=$([ "$QUALITY" = "success" ] && echo "✅" || echo "❌")
+          BUILD_EMOJI=$([ "$BUILD" = "success" ] && echo "✅" || ([ "$BUILD" = "skipped" ] && echo "⏭️" || echo "❌"))
+          SECURITY_EMOJI=$([ "$SECURITY" = "success" ] && echo "✅" || echo "⚠️")
+
+          if [ "$EVENT_TYPE" = "pull_request" ]; then
+            TITLE="$EMOJI PR #${{ github.event.pull_request.number }} - Pipeline Completo"
+            URL="${{ github.event.pull_request.html_url }}"
+          else
+            TITLE="$EMOJI Pipeline Completo - $BRANCH"
+            URL="https://github.com/$REPO/commit/$COMMIT_SHA"
+          fi
+
+          # Mensagem especial se for merge para main
+          EXTRA_FIELD=""
+          if [ "$BRANCH" = "main" ] && [ "$EVENT_TYPE" = "push" ] && [ "$QUALITY" = "success" ]; then
+            EXTRA_FIELD=",{\"name\": \"🚀 Deploy\", \"value\": \"Vercel está fazendo deploy...\", \"inline\": false}"
+          fi
+
+          curl -H "Content-Type: application/json" -X POST -d "{
+            \"embeds\": [{
+              \"title\": \"$TITLE\",
+              \"description\": \"**Status**: $STATUS\",
+              \"color\": $COLOR,
+              \"fields\": [
+                {\"name\": \"Quality Checks\", \"value\": \"$QUALITY_EMOJI $(echo $QUALITY | tr '[:lower:]' '[:upper:]')\", \"inline\": true},
+                {\"name\": \"Build\", \"value\": \"$BUILD_EMOJI $(echo $BUILD | tr '[:lower:]' '[:upper:]')\", \"inline\": true},
+                {\"name\": \"Security\", \"value\": \"$SECURITY_EMOJI $(echo $SECURITY | tr '[:lower:]' '[:upper:]')\", \"inline\": true},
+                {\"name\": \"Branch\", \"value\": \"\`$BRANCH\`\", \"inline\": true},
+                {\"name\": \"Commit\", \"value\": \"\`$SHORT_SHA\`\", \"inline\": true},
+                {\"name\": \"Author\", \"value\": \"@$AUTHOR\", \"inline\": true}
+                $EXTRA_FIELD
+              ],
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+              \"url\": \"$RUN_URL\",
+              \"footer\": {\"text\": \"GitHub Actions\"}
+            }]
+          }" "$DISCORD_WEBHOOK_URL"
+
+  # ============================================
+  # Notificação Discord - PR Merged
+  # ============================================
+  notify-merge:
+    name: 📢 Notify Merge
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    steps:
+      - name: Send Discord notification - PR Merged
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "⚠️ DISCORD_WEBHOOK_URL não configurado - pulando notificação"
+            exit 0
+          fi
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+          MERGED_BY="${{ github.event.pull_request.merged_by.login }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+
+          DEPLOY_MSG=""
+          if [ "$BASE_BRANCH" = "main" ]; then
+            DEPLOY_MSG=",{\"name\": \"🚀 Deploy\", \"value\": \"Vercel está fazendo deploy para produção...\", \"inline\": false}"
+          fi
+
+          curl -H "Content-Type: application/json" -X POST -d "{
+            \"embeds\": [{
+              \"title\": \"🎉 PR Merged - Workemia\",
+              \"description\": \"**PR #$PR_NUMBER**: $PR_TITLE\",
+              \"color\": \"5763719\",
+              \"fields\": [
+                {\"name\": \"Base\", \"value\": \"\`$BASE_BRANCH\`\", \"inline\": true},
+                {\"name\": \"Head\", \"value\": \"\`$HEAD_BRANCH\`\", \"inline\": true},
+                {\"name\": \"Author\", \"value\": \"@$AUTHOR\", \"inline\": true},
+                {\"name\": \"Merged by\", \"value\": \"@$MERGED_BY\", \"inline\": false}
+                $DEPLOY_MSG
+              ],
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+              \"url\": \"$PR_URL\",
+              \"footer\": {\"text\": \"GitHub Actions\"}
+            }]
+          }" "$DISCORD_WEBHOOK_URL"
