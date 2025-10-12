@@ -30,3 +30,6 @@ next-env.d.ts
 *.log
 *.md
 *.sql
+# Package manager locks (usar apenas npm)
+pnpm-lock.yaml
+yarn.lock
