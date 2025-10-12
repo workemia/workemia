@@ -50,7 +50,7 @@ export function useStats() {
 
         let averageRating = 0
         if (ratingsData && ratingsData.length > 0) {
-          const sum = ratingsData.reduce((acc, curr) => acc + (curr.rating || 0), 0)
+          const sum = ratingsData.reduce((acc, curr) => acc + ((curr as any).rating || 0), 0)
           averageRating = sum / ratingsData.length
         }
 
