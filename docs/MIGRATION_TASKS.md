@@ -1,6 +1,10 @@
 # Lista de Tarefas - Migração para Microsserviços
 
+<<<<<<< Updated upstream
 **Projeto:** ServiceHub Microservices Migration
+=======
+**Projeto:** Workemia Microservices Migration
+>>>>>>> Stashed changes
 **Data de Criação:** 2025-10-04
 **Status:** Planejamento
 
@@ -8,7 +12,11 @@
 
 ## 📋 Visão Geral
 
+<<<<<<< Updated upstream
 Este documento contém todas as tarefas necessárias para migrar o ServiceHub de uma arquitetura monolítica Next.js para uma arquitetura de microsserviços baseada em Java 21 + Spring Boot.
+=======
+Este documento contém todas as tarefas necessárias para migrar o Workemia de uma arquitetura monolítica Next.js para uma arquitetura de microsserviços baseada em Java 21 + Spring Boot.
+>>>>>>> Stashed changes
 
 **Total de Tarefas:** 150+
 **Duração Estimada:** 16 semanas
@@ -23,7 +31,11 @@ Este documento contém todas as tarefas necessárias para migrar o ServiceHub de
 - [ ] **TASK-001:** Criar repositório principal (mono-repo ou multi-repo decision)
 - [ ] **TASK-002:** Setup estrutura de pastas para microsserviços
   ```
+<<<<<<< Updated upstream
   servicehub/
+=======
+  Workemia/
+>>>>>>> Stashed changes
   ├── frontend/
   ├── api-gateway/
   ├── services/
@@ -81,7 +93,11 @@ Este documento contém todas as tarefas necessárias para migrar o ServiceHub de
 - [ ] **TASK-028:** Setup de Postman workspace compartilhado
 - [ ] **TASK-029:** Criar collections de API para cada serviço
 - [ ] **TASK-030:** Setup de ambiente de testes (staging)
+<<<<<<< Updated upstream
 - [ ] **TASK-031:** Configurar domínios de desenvolvimento (local.servicehub.com)
+=======
+- [ ] **TASK-031:** Configurar domínios de desenvolvimento (local.Workemia.com)
+>>>>>>> Stashed changes
 - [ ] **TASK-032:** Setup de SSL certificates para desenvolvimento
 
 ---
@@ -661,5 +677,10 @@ Este documento contém todas as tarefas necessárias para migrar o ServiceHub de
 
 ---
 
+<<<<<<< Updated upstream
 **Mantido por:** Equipe ServiceHub
 **Última atualização:** 2025-10-04
+=======
+**Mantido por:** Equipe Workemia
+**Última atualização:** 2025-10-11
+>>>>>>> Stashed changes

@@ -1,4 +1,4 @@
-# 🏗️ Service Workee
+# 🏗️ Workemia
 
 **Plataforma de marketplace de serviços que conecta clientes a prestadores locais**
 
@@ -11,7 +11,7 @@
 
 ## 📋 **Visão Geral**
 
-Service Workee é uma aplicação completa de marketplace que permite a **clientes solicitarem serviços** e **prestadores oferecerem seus trabalhos** de forma organizada, segura e eficiente. A plataforma oferece um ecossistema completo para gestão de serviços locais.
+Workemia é uma aplicação completa de marketplace que permite a **clientes solicitarem serviços** e **prestadores oferecerem seus trabalhos** de forma organizada, segura e eficiente. A plataforma oferece um ecossistema completo para gestão de serviços locais.
 
 ### ✨ **Funcionalidades Principais**
 - 🔐 **Sistema de Autenticação Completo** (Supabase Auth)
@@ -243,9 +243,9 @@ const { user, loading, logout } = useAuth()
 
 ### **Contato**
 - **Developer**: Zeneilton Granja de Paulo
-- **Email**: [suporte@serviceworkee](mailto:suporte@serviceworkee)
+- **Email**: [cto@workemia.com](mailto:cto@workemia.com)
 - **Wakatime**: [Acompanhe o progresso](https://wakatime.com/badge/user/5b16e0ec-6419-487c-9792-82c9468dd942/project/a232da2f-1ac2-4028-84f0-b249e2ffab14)
 
 ---
 
-**🌟 Service Workee - Conectando pessoas através de serviços de qualidade**
+**🌟 Workemia - Conectando pessoas através de serviços de qualidade**

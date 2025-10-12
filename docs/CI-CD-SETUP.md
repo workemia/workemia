@@ -1,6 +1,12 @@
+<<<<<<< Updated upstream
 # 🚀 CI/CD Pipeline - ServiceHub
 
 Pipeline de Integração e Deploy Contínuo configurado para o ServiceHub com GitHub Actions e Vercel.
+=======
+# 🚀 CI/CD Pipeline - Workemia
+
+Pipeline de Integração e Deploy Contínuo configurado para o Workemia com GitHub Actions e Vercel.
+>>>>>>> Stashed changes
 
 ## ✅ O que foi implementado
 

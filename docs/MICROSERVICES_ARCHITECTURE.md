@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 # Arquitetura de Microsserviços - ServiceHub
+=======
+# Arquitetura de Microsserviços - Workemia
+>>>>>>> Stashed changes
 
 **Versão:** 1.0.0
 **Data:** 2025-10-04
@@ -26,7 +30,11 @@
 ## 🎯 Visão Geral
 
 ### Objetivo
+<<<<<<< Updated upstream
 Transformar o ServiceHub de uma aplicação monolítica Next.js em uma arquitetura de microsserviços moderna, escalável e resiliente, utilizando Java 21 + Spring Boot 3.3 para a camada de backend, mantendo Next.js como frontend e BFF (Backend for Frontend).
+=======
+Transformar o Workemia de uma aplicação monolítica Next.js em uma arquitetura de microsserviços moderna, escalável e resiliente, utilizando Java 21 + Spring Boot 3.3 para a camada de backend, mantendo Next.js como frontend e BFF (Backend for Frontend).
+>>>>>>> Stashed changes
 
 ### Motivação
 - **Escalabilidade independente** de cada domínio de negócio
@@ -1858,6 +1866,10 @@ public void syncLegacyData() {
 
 ---
 
+<<<<<<< Updated upstream
 **Documento mantido por:** Equipe de Arquitetura ServiceHub
+=======
+**Documento mantido por:** Equipe de Arquitetura Workemia
+>>>>>>> Stashed changes
 **Última atualização:** 2025-10-04
 **Próxima revisão:** 2025-10-18
