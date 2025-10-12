@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client"
 import { isAdminEmail } from "@/lib/admin-config"
 import { AuthUser, UserRole, DEFAULT_PERMISSIONS } from "@/types/auth"
 import type { User } from "@supabase/supabase-js"
-
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
@@ -139,7 +138,7 @@ export function useAuth() {
     })
 
     return () => subscription.unsubscribe()
-  }, [supabase])
+  }, []) // Remover supabase das dependências - ele é estável
 
   const logout = async () => {
     try {
