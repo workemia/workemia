@@ -1,17 +1,31 @@
 'use client'
 
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { AuthenticatedLayout } from '@/components/layouts'
 import { usePermissions } from '@/hooks/use-permissions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, Settings, BarChart3, CreditCard, FileText, Shield } from 'lucide-react'
 
-function AdminDashboardContent() {
+export default function AdminDashboard() {
   const { user, permissions } = usePermissions()
 
+  // Verificação de role admin
+  if (user && user.role !== 'admin') {
+    return (
+      <AuthenticatedLayout>
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Acesso Negado</h1>
+            <p className="text-gray-600">Esta área é restrita para administradores.</p>
+          </div>
+        </div>
+      </AuthenticatedLayout>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <AuthenticatedLayout>
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard Administrativo</h1>
           <p className="text-gray-600">Controle total da plataforma</p>
@@ -186,14 +200,6 @@ function AdminDashboardContent() {
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-export default function AdminDashboard() {
-  return (
-    <ProtectedRoute requiredRole="admin">
-      <AdminDashboardContent />
-    </ProtectedRoute>
+    </AuthenticatedLayout>
   )
 }
