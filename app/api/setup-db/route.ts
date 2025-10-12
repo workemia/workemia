@@ -18,7 +18,7 @@ export async function POST() {
       );
     `
 
-    const { error: categoriesError } = await supabase.rpc('execute_sql', { sql: categoriesSQL })
+    const { error: categoriesError } = await (supabase as any).rpc('execute_sql', { sql: categoriesSQL })
     if (categoriesError) {
       console.error('Erro ao criar tabela categories:', categoriesError)
     } else {
@@ -56,7 +56,7 @@ export async function POST() {
       );
     `
 
-    const { error: servicesError } = await supabase.rpc('execute_sql', { sql: servicesSQL })
+    const { error: servicesError } = await (supabase as any).rpc('execute_sql', { sql: servicesSQL })
     if (servicesError) {
       console.error('Erro ao criar tabela services:', servicesError)
     } else {
@@ -75,7 +75,7 @@ export async function POST() {
         { name: 'Montagem de Móveis', description: 'Montagem e instalação de móveis' },
         { name: 'Reforma', description: 'Reformas e construção civil' },
         { name: 'Técnico em Informática', description: 'Suporte técnico em informática' }
-      ], { onConflict: 'name' })
+      ] as any, { onConflict: 'name' })
 
     if (insertError) {
       console.error('Erro ao inserir categorias:', insertError)
