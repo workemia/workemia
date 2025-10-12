@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { stripe, STRIPE_CONFIG } from '@/lib/stripe/config'
+import { getStripe, STRIPE_CONFIG } from '@/lib/stripe/config'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,6 +63,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Obter stripe sob demanda
+    const stripe = getStripe()
 
     // Criar Payment Intent no Stripe
     const paymentIntent = await stripe.paymentIntents.create({
