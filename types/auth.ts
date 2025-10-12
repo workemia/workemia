@@ -23,6 +23,8 @@ export interface AuthUser {
   isEmployee: boolean
   department?: string
   level?: number
+  phone?: string
+  type?: string
 }
 
 export const ROLE_HIERARCHY = {

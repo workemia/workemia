@@ -25,7 +25,7 @@ export const ADMIN_CONFIG = {
  */
 export function isAdminEmail(email: string | undefined | null): boolean {
   if (!email) return false
-  return ADMIN_CONFIG.emails.includes(email.toLowerCase())
+  return ADMIN_CONFIG.emails.includes(email.toLowerCase() as typeof ADMIN_CONFIG.emails[number])
 }
 
 /**
