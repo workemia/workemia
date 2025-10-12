@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 // POST - Criar proposta
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Verificar autenticação
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 // GET - Listar propostas
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { searchParams } = new URL(request.url)
     const service_id = searchParams.get('service_id')
 
