@@ -7,12 +7,33 @@ import { cookies } from "next/headers"
  * it.
  */
 export async function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Validação para build time
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // Durante build, retornar um mock client
+    return {
+      auth: {
+        getSession: async () => ({ data: { session: null }, error: null }),
+        getUser: async () => ({ data: { user: null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      },
+      from: () => ({
+        select: () => Promise.resolve({ data: null, error: null }),
+        insert: () => Promise.resolve({ data: null, error: null }),
+        update: () => Promise.resolve({ data: null, error: null }),
+        delete: () => Promise.resolve({ data: null, error: null }),
+      }),
+    } as any
+  }
+
   const cookieStore = await cookies()
 
   // Next.js mapeia ENV_NEXT_PUBLIC_* para NEXT_PUBLIC_* via next.config.mjs
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
     cookies: {
       getAll() {
