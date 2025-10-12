@@ -111,17 +111,21 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando...</p>
         </div>
       </div>
     )
   }
 
+  // Se não tem usuário, mostra tela vazia para evitar flash de conteúdo
+  // O useEffect acima vai redirecionar para login se necessário
   if (!user) {
-    return null
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900"></div>
+    )
   }
 
   return (

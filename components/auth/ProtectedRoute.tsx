@@ -22,33 +22,50 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const router = useRouter()
   const { user, hasRole, hasPermission, canAccess } = usePermissions()
+  const { loading } = require('@/hooks/use-auth').useAuth()
 
   useEffect(() => {
-    // Se não há usuário, redirecionar para login
-    if (!user) {
-      router.push('/login')
+    // IMPORTANTE: Só redireciona se não estiver carregando
+    if (loading) {
+      console.log('🔄 ProtectedRoute: Aguardando loading...')
       return
     }
 
+    // Se não há usuário, redirecionar para login apropriado
+    if (!user) {
+      console.log('❌ ProtectedRoute: Sem usuário, redirecionando...')
+      // Admin/Employee vão para /admin/login
+      const loginRoute = (requiredRole === 'admin' || requiredRole === 'employee')
+        ? '/admin/login'
+        : '/login'
+      router.push(loginRoute)
+      return
+    }
+
+    console.log('✅ ProtectedRoute: User encontrado', { email: user.email, role: user.role, requiredRole })
+
     // Verificar acesso baseado em role e permissão
     if (requiredRole && !canAccess(requiredRole, requiredPermission)) {
+      console.log('❌ ProtectedRoute: canAccess falhou, redirecionando...')
       // Redirecionar baseado no role do usuário
       const redirectMap: Record<string, string> = {
         admin: '/dashboard/admin',
-        employee: '/dashboard/employee', 
+        employee: '/dashboard/employee',
         provider: '/dashboard/prestador',
         client: '/dashboard/cliente',
         visitor: '/'
       }
-      
+
       const redirectTo = user.role ? redirectMap[user.role] : '/'
       router.push(redirectTo)
       return
     }
-  }, [user, requiredRole, requiredPermission, router, canAccess])
 
-  // Se não há usuário ainda, mostrar loading
-  if (!user) {
+    console.log('✅ ProtectedRoute: Acesso permitido!')
+  }, [user, loading, requiredRole, requiredPermission, router, canAccess])
+
+  // Se está carregando ou não há usuário ainda, mostrar loading
+  if (loading || !user) {
     return loadingComponent || (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
