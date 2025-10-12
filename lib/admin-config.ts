@@ -4,9 +4,9 @@
 export const ADMIN_CONFIG = {
   // Lista de emails com acesso administrativo
   emails: [
-    'admin@servicehub.com',           // Conta administrativa principal
-    'vitor.paula.lucas@gmail.com',    // Product Owner / Developer
-    'zeneiltongranja@gmail.com'       // CTO / Tech Lead
+    'admin@workemia.com',             // Conta administrativa principal
+    'cto@workemia.com',               // CTO / Tech Lead
+    'zeneiltongranja@gmail.com'       // CTO / Tech Lead (pessoal)
   ],
   
   // Configurações de permissões

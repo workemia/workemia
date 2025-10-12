@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ProposalModal } from "@/components/proposal-modal"
 
 type Service = any & {
   users: any
@@ -47,6 +48,8 @@ export default function DashboardPrestador() {
   const [events, setEvents] = useState([])
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [showProposalModal, setShowProposalModal] = useState(false)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -413,18 +416,24 @@ export default function DashboardPrestador() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
-                              onClick={() => acceptService(service.id)}
+                              onClick={() => {
+                                setSelectedService(service)
+                                // Pode abrir modal de detalhes aqui
+                              }}
                             >
                               Ver Detalhes
                             </Button>
-                            <Button 
+                            <Button
                               size="sm"
-                              onClick={() => acceptService(service.id)}
+                              onClick={() => {
+                                setSelectedService(service)
+                                setShowProposalModal(true)
+                              }}
                             >
-                              Aceitar Serviço
+                              Enviar Proposta
                             </Button>
                           </div>
                         </div>
@@ -644,6 +653,27 @@ export default function DashboardPrestador() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal de Proposta */}
+      {selectedService && (
+        <ProposalModal
+          isOpen={showProposalModal}
+          onClose={() => {
+            setShowProposalModal(false)
+            setSelectedService(null)
+          }}
+          serviceId={selectedService.id}
+          serviceTitle={selectedService.title}
+          serviceBudget={
+            selectedService.budget_min && selectedService.budget_max
+              ? { min: selectedService.budget_min, max: selectedService.budget_max }
+              : undefined
+          }
+          onSuccess={() => {
+            fetchDashboardData(user.id)
+          }}
+        />
+      )}
     </div>
   )
 }

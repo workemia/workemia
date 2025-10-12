@@ -83,6 +83,15 @@ export default function LoginPage() {
       }
 
       if (data.user) {
+        // Garantir que o profile existe (fallback)
+        try {
+          await fetch('/api/auth/ensure-profile', {
+            method: 'POST',
+          })
+        } catch (err) {
+          console.warn('Aviso: erro ao garantir profile:', err)
+        }
+
         toast({
           title: "Login realizado com sucesso!",
           description: `Bem-vindo de volta!`,
@@ -141,6 +150,15 @@ export default function LoginPage() {
       }
 
       if (data.user) {
+        // Garantir que o profile existe (fallback)
+        try {
+          await fetch('/api/auth/ensure-profile', {
+            method: 'POST',
+          })
+        } catch (err) {
+          console.warn('Aviso: erro ao garantir profile:', err)
+        }
+
         toast({
           title: "Login realizado com sucesso!",
           description: `Bem-vindo de volta!`,
@@ -179,7 +197,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-white hover:text-blue-100 transition-colors">
-            ServiceHub
+            Workemia
           </Link>
           <p className="text-blue-100 mt-2">Entre na sua conta</p>
         </div>
@@ -187,7 +205,12 @@ export default function LoginPage() {
         <Card className="shadow-2xl">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-bold">Fazer Login</CardTitle>
-            <p className="text-gray-600 text-sm">Escolha seu tipo de conta</p>
+            <p className="text-gray-600 text-sm">Entre como cliente ou prestador</p>
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+              <p className="text-xs text-blue-800">
+                <strong>Administradores:</strong> <Link href="/admin/login" className="underline hover:text-blue-600">Use o login administrativo</Link>
+              </p>
+            </div>
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

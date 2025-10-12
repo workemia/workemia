@@ -90,6 +90,19 @@ export default function CadastroPage() {
       }
 
       if (data.user) {
+        // Garantir que o profile foi criado
+        try {
+          await fetch('/api/auth/ensure-profile', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+        } catch (err) {
+          console.warn('Aviso: erro ao garantir profile:', err)
+          // Não bloqueia o fluxo
+        }
+
         toast({
           title: "Cadastro realizado com sucesso!",
           description: "Você pode fazer login agora.",
@@ -117,7 +130,7 @@ export default function CadastroPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-white">
-            ServiceHub
+            Workemia
           </Link>
           <p className="text-blue-100 mt-2">Crie sua conta</p>
         </div>
@@ -169,10 +182,16 @@ export default function CadastroPage() {
                     <SelectValue placeholder="Selecione o tipo de conta" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="client">Cliente</SelectItem>
-                    <SelectItem value="provider">Prestador de Serviços</SelectItem>
+                    <SelectItem value="client">Cliente - Quero solicitar serviços</SelectItem>
+                    <SelectItem value="provider">Prestador - Quero oferecer serviços</SelectItem>
+                    <SelectItem value="visitor">Visitante - Apenas explorar a plataforma</SelectItem>
                   </SelectContent>
                 </Select>
+                {formData.tipo === 'visitor' && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Como visitante, você pode explorar a plataforma mas não pode solicitar ou oferecer serviços.
+                  </p>
+                )}
               </div>
 
               <div>

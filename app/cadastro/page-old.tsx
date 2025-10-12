@@ -165,7 +165,7 @@ export default function CadastroPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-white">
-            ServiceHub
+            Workemia
           </Link>
           <p className="text-blue-100 mt-2">Crie sua conta</p>
         </div>
