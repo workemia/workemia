@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/hooks/use-toast"
 import { Eye, EyeOff, User, Briefcase, Mail, Lock } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -185,24 +187,26 @@ export default function LoginPage() {
   }
 
   return (
+    <>
+      <Header />
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+      <div className="w-full max-w-4xl">
+        {/* <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-white hover:text-blue-100 transition-colors">
             Workemia
           </Link>
           <p className="text-blue-100 mt-2">Entre na sua conta</p>
-        </div>
+        </div> */}
 
         <Card className="shadow-2xl">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-bold">Fazer Login</CardTitle>
             <p className="text-gray-600 text-sm">Entre como cliente ou prestador</p>
-            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+            {/* <div className="mt-3 p-3 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-800">
                 <strong>Administradores:</strong> <Link href="/admin/login" className="underline hover:text-blue-600">Use o login administrativo</Link>
               </p>
-            </div>
+            </div> */}
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -292,7 +296,7 @@ export default function LoginPage() {
                   </Button>
                 </form>
 
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Button
                     variant="outline"
                     className="w-full h-11 bg-transparent"
@@ -313,7 +317,7 @@ export default function LoginPage() {
                     <i className="fab fa-facebook mr-2 text-blue-600"></i>
                     Continuar com Facebook
                   </Button>
-                </div>
+                </div> */}
               </TabsContent>
 
               <TabsContent value="prestador" className="space-y-4 mt-6">
@@ -390,8 +394,8 @@ export default function LoginPage() {
                     )}
                   </Button>
                 </form>
-
-                <div className="space-y-2">
+                {/* Prestador Login */}
+                {/* <div className="space-y-2">
                   <Button
                     variant="outline"
                     className="w-full h-11 bg-transparent"
@@ -412,7 +416,7 @@ export default function LoginPage() {
                     <i className="fab fa-linkedin mr-2 text-blue-700"></i>
                     Continuar com LinkedIn
                   </Button>
-                </div>
+                </div> */}
               </TabsContent>
             </Tabs>
 
@@ -438,5 +442,7 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    <Footer />
+    </> 
   )
 }
